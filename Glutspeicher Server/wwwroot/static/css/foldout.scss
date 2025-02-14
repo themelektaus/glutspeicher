@@ -1,0 +1,39 @@
+x-foldout {
+    margin-top: 1em;
+    
+    > .title {
+        background-color: var(--bg-color-3);
+        padding: .325em .5em;
+        user-select: none;
+        
+        &:hover {
+            background-color: var(--bg-color-4);
+        }
+        
+        &::before {
+            content: '+ ';
+        }
+    }
+    
+    &:not(.visible) > .title:hover + .content  {
+        border-color: var(--bg-color-4);
+    }
+    
+    > .content {
+        display: none;
+        padding: .5em;
+        border: .125em solid transparent;
+    }
+    
+    &.visible {
+        
+        > .title {
+            background-color: $bg-active;
+        }
+        
+        > .content {
+            display: unset;
+            border-color: $bg-active;
+        }
+    }
+}

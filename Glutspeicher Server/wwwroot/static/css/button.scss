@@ -1,0 +1,57 @@
+button {
+    outline: none;
+    border: none;
+    padding: .425em .825em;
+    user-select: none;
+    
+    &:not([disabled]) {
+        background-color: var(--bg-color-3);
+        
+        &:hover {
+            filter: brightness(1.1);
+        }
+        
+        &:active {
+            filter: brightness(1.2);
+        }
+    }
+    
+    &[disabled] {
+        opacity: .5;
+    }
+    
+    &[style] {
+        background-repeat: no-repeat;
+        background-position: .375em center;
+        background-size: 1.25em;
+        
+        &[disabled],
+        &:not(:hover) {
+            background-color: transparent;
+        }
+        
+        &.with-text {
+            padding-left: 2em;
+        }
+        
+        &:not(.with-text) {
+            height: 2em;
+            aspect-ratio: 1;
+            margin: -.25em;
+            border-radius: 50%;
+            background-position-x: center;
+        }
+    }
+    
+    &.primary {
+        background-color: $bg-primary !important;
+    }
+    
+    &.positive {
+        background-color: $bg-positive !important;
+    }
+    
+    &.negative {
+        background-color: $bg-negative !important;
+    }
+}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <CompressionEnabled>false</CompressionEnabled>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="Build\**" />
+        <Content Remove="Build\**" />
+        <EmbeddedResource Remove="Build\**" />
+        <None Remove="Build\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Data\**" />
+        <Content Remove="Data\**" />
+        <EmbeddedResource Remove="Data\**" />
+        <None Remove="Data\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="LiteDB" Version="5.0.21" />
+        <PackageReference Include="LibSassHost" Version="1.5.0" />
+        <PackageReference Include="LibSassHost.Native.linux-x64" Version="1.5.0" />
+        <PackageReference Include="LibSassHost.Native.win-x64" Version="1.5.0" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <OutputType>WinExe</OutputType>
+        <UseWindowsForms>true</UseWindowsForms>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="Build\**" />
+        <Content Remove="Build\**" />
+        <EmbeddedResource Remove="Build\**" />
+        <None Remove="Build\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="rubik.ttf" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="rubik.ttf">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="SSH.NET" Version="2024.2.0" />
+    </ItemGroup>
+
+    <Import Project="Deploy.targets" />
+
+</Project>

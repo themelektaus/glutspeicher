@@ -1,0 +1,48 @@
+<div data-page="relays">
+    <h1>
+        Relays
+    </h1>
+    <div class="toolbar">
+        <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
+        <div style="flex: 1; "></div>
+        <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
+        <div style="flex: 3; "></div>
+        <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+    </div>
+    <div class="search">
+        <input type="text" placeholder="Search" />
+    </div>
+    <div class="content scrollable">
+        <div class="items"></div>
+    </div>
+    <x-dialog class="with-backdrop-blur">
+        <div class="field">
+            <label>Hostname</label>
+            <input class="hostname" type="text">
+        </div>
+        <div class="field">
+            <label>SSH Port</label>
+            <input class="sshPort" type="number" min="1" max="65535">
+        </div>
+        <div class="field">
+            <label>SSH Username</label>
+            <input class="sshUsername" type="text">
+        </div>
+        <div class="field">
+            <label>SSH Password</label>
+            <input class="sshPassword" type="password">
+        </div>
+        <div class="field">
+            <label>Min. Port</label>
+            <input class="minPort" type="number" min="1" max="65535">
+        </div>
+        <div class="field">
+            <label>Max. Port</label>
+            <input class="maxPort" type="number" min="1" max="65535">
+        </div>
+        <div class="field">
+            <label>Web Command Line</label>
+            <input class="webCommandLine" type="text">
+        </div>
+    </x-dialog>
+</div>

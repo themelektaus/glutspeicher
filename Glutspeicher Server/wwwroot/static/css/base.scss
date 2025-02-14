@@ -1,0 +1,102 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg-color-3);
+    display: flex;
+    flex-direction: column;
+    
+    &.debug .toolbar::before,
+    &.debug .dialog-bottom:has(button)::before {
+        content: 'Debug';
+        display: inline-block;
+        padding: .425em .825em;
+        background-color: #277;
+        color: white;
+        text-align: center;
+        font-size: 1rem;
+    }
+}
+
+body, input, button, textarea {
+    font-family: Rubik, sans-serif;
+    font-size: 1em;
+    color: var(--fg-text);
+}
+
+input, textarea {
+    padding: .5em;
+    outline: none;
+    border: none;
+    background-color: var(--bg-color-3);
+    
+    &:focus {
+        background-color: var(--bg-color-4);
+    }
+}
+
+input {
+    
+    &[type="checkbox"] {
+        width: 1.25em;
+        margin: -.25em .25em -.25em 0;
+        translate: 0 .25em;
+        aspect-ratio: 1;
+        
+    }
+    
+    &[type="color"] {
+        padding: .125em .175em;
+    }
+}
+
+textarea {
+    resize: none;
+    height: 4.75em;
+    line-height: 1.5;
+}
+
+h1 {
+    margin-block: 0 1em;
+    letter-spacing: .025em;
+}
+
+h2 {
+    margin-block: 0 1em;
+}
+
+div {
+    &:has(> input[type="text"] + button) {
+        display: flex;
+        flex-direction: row;
+        flex: 0;
+    }
+    
+    > input[type="text"] {
+        
+        &:has(+ button) {
+            flex: 1;
+        }
+        
+        + button,
+        + button + button {
+            background-image: url(../res/more.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 57.5%;
+            width: 2.25em;
+            background-color: var(--bg-color-5);
+        }
+    }
+}
+
+a {
+    color: #fa3;
+    text-decoration: none;
+    
+    &:hover {
+        color: #fc6;
+    }
+}

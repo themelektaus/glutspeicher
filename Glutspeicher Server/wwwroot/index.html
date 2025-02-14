@@ -1,0 +1,43 @@
+﻿<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Glutspeicher</title>
+        <link rel="stylesheet" href="static/css/style.scss">
+        <script src="static/js/script.js"></script>
+        <script src="static/jsOTP.min.js"></script>
+        <script>_jsOTP = new jsOTP.totp()</script>
+    </head>
+    <body>
+        <div id="app">
+            <nav>
+                <ul>
+                    <li data-link="passwords">Passwords</li>
+                    <li data-link="relays">Relays</li>
+                    <li data-link="settings">Settings</li>
+                </ul><a href="//hub.docker.com/r/melektaus/glutspeicher" target="_blank">
+                     <span style="background-image: url(static/res/docker.svg); "></span>
+                    Docker
+                </a>
+                <a href="//github.com/themelektaus/glutspeicher" target="_blank">
+                    <span style="background-image: url(static/res/github.svg); "></span>
+                    Source
+                </a>
+                <a href="static/glutspeicher-server.zip">
+                    <span style="background-image: url(static/res/download.svg); "></span>
+                    Glutspeicher Server
+                    <span class="version" SERVER_VERSION></span>
+                </a>
+                <a href="static/glutspeicher-agent.zip">
+                    <span style="background-image: url(static/res/download.svg); "></span>
+                    Glutspeicher Agent
+                    <span class="version" AGENT_VERSION></span>
+                </a>
+            </nav>
+            <div id="pages">
+                <!-- include static/page/*.html -->
+            </div>
+        </div>
+    </body>
+</html>

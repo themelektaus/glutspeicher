@@ -1,0 +1,113 @@
+[data-page="relays"] {
+    
+    .toolbar {
+        margin-block-end: 1em;
+        display: flex;
+        gap: .5em;
+    }
+    
+    .search {
+        display: flex;
+        
+        input {
+            flex: 1;
+        }
+    }
+    
+    .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1em 1em 1em 0;
+        
+        .items {
+            display: flex;
+            flex-direction: column;
+            
+            .item {
+                display: grid;
+                grid-template-columns: 1fr;
+                padding: .5em;
+                
+                &:hover {
+                    background-color: var(--bg-color-4);
+                }
+                
+                &.selected {
+                    background-color: $bg-active-less;
+                }
+                
+                > div  {
+                    position: relative;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+        }
+    }
+}
+
+:has([data-page="relays"]) {
+    
+    x-dialog {
+        
+        .dialog-window {
+            width: 100%;
+            max-width: 40em;
+        }
+        
+        .dialog-top {
+            padding: .5em .5em .5em .625em;
+            font-size: 1.25em;
+        }
+        
+        .dialog-content {
+            display: flex;
+            flex-direction: column;
+            gap: .5em;
+            padding: 1em 3em;
+            
+            x-foldout.visible .content {
+                display: flex;
+                flex-direction: column;
+                gap: .5em;
+            }
+            
+            .field {
+                display: flex;
+                align-items: center;
+                gap: 1em;
+                
+                label {
+                    flex: 1;
+                    text-align: right;
+                }
+                
+                label + input,
+                label + textarea,
+                label + div {
+                    flex: 2.25;
+                    min-width: 0;
+                }
+                
+                label + div {
+                    flex: 2.14;
+                    overflow: hidden;
+                }
+                
+                label:has(+ textarea) {
+                    align-self: flex-start;
+                    margin-top: .325em;
+                }
+            }
+        }
+        
+        .dialog-bottom {
+            display: flex;
+            gap: .5em;
+            padding: .5em .5em 1em;
+            margin: 0 auto;
+        }
+    }
+}

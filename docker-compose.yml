@@ -1,0 +1,8 @@
+﻿services:
+  app:
+    image: melektaus/glutspeicher
+    ports:
+      - 8100:80
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./Database.litedb:/app/Data/Database.litedb

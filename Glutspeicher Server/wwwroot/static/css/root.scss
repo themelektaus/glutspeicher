@@ -1,0 +1,22 @@
+$bg-primary: #448;
+$bg-active: #951;
+$bg-active-less: #9516;
+$bg-active-more: #c96;
+$bg-positive: #171;
+$bg-negative: #731;
+
+:root {
+    --fg-placeholder: #999;
+    --fg-text: #eee;
+    
+    --bg-color-1: #111;
+    --bg-color-2: #222;
+    --bg-color-3: #333;
+    --bg-color-4: #444;
+    --bg-color-5: #555;
+    --bg-color-6: #666;
+    --bg-color-7: #777;
+    
+    --dialog-backdrop: brightness(.5) contrast(.8);
+    --dialog-backdrop-blur: brightness(.5) contrast(.8) blur(.1em);
+}

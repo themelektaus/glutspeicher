@@ -1,0 +1,94 @@
+button.action:active {
+    background-color: $bg-active !important;
+}
+
+button.eye,
+button.copy {
+    width: 1.125em;
+    height: 1.125em;
+    padding: 0;
+    background-size: 100%;
+    background-color: transparent !important;
+    opacity: 0;
+    translate: .25em 0;
+    
+    &:hover {
+        opacity: .8 !important;
+    }
+    
+    &:active {
+        opacity: 1 !important;
+    }
+}
+
+button.eye {
+    background-image: url(../res/eyeoutline.svg);
+}
+
+button.copy {
+    background-image: url(../res/contentcopy.svg);
+}
+
+.password {
+    span {
+        font-family: DejaVu;
+        font-size: .85em;
+    }
+    
+    span:nth-child(1) {
+        display: none;
+    }
+    
+    span:nth-child(2) {
+        display: unset;
+    }
+    
+    button + button {
+        translate: .325em 0;
+    }
+    
+    &.revealed {
+        
+        span:nth-child(1) {
+            display: unset;
+        }
+        
+        span:nth-child(2) {
+            display: none;
+        }
+        
+        button.eye {
+            background-image: url(../res/eye.svg);
+            opacity: .5 !important;
+            
+            &:hover {
+                opacity: .8 !important;
+            }
+            
+            &:active {
+                opacity: 1 !important;
+            }
+        }
+    }
+}
+
+*:hover > * > button.copy,
+*:hover > * > x-totp > button.copy,
+*:hover > * > button.eye {
+    opacity: .5;
+}
+
+x-totp {
+    
+    canvas {
+        position: absolute;
+        translate: .5em -.05em;
+        rotate: -90deg;
+    }
+    
+    button.copy {
+        position: absolute;
+        right: .75em;
+        translate: 0;
+    }
+}

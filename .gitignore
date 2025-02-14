@@ -1,0 +1,11 @@
+/.vs/
+/Temp/
+
+/Glutspeicher */bin/
+/Glutspeicher */Build/
+/Glutspeicher */Data/
+/Glutspeicher */obj/
+
+/Glutspeicher */**/*.user
+
+/Glutspeicher Agent/Deploy.targets

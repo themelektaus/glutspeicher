@@ -1,0 +1,115 @@
+x-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity .2s;
+    padding: 1em;
+    
+    &.with-backdrop {
+        backdrop-filter: var(--dialog-backdrop);
+    }
+    
+    &.with-backdrop-blur {
+        backdrop-filter: var(--dialog-backdrop-blur);
+    }
+    
+    &.with-big-shadow .dialog-window {
+        box-shadow:
+            0 0 10em -2em #555,
+            0 0 5em -1em #000;
+    }
+    
+    &.visible {
+        opacity: 1;
+        pointer-events: all;
+        z-index: 1;
+    }
+    
+    &.busy {
+        pointer-events: none;
+        
+        input, button {
+            opacity: .5;
+        }
+    }
+    
+    .dialog-window {
+        min-width: 4em;
+        min-height: 2em;
+        max-height: 80vh;
+        scale: .9;
+        transition: scale .2s;
+    }
+    
+    &.visible .dialog-window {
+        scale: 1;
+    }
+    
+    &.visible .dialog-window:not(:has(.loading)) {
+        min-width: unset;
+    }
+    
+    .dialog-window {
+        box-sizing: border-box;
+        background-color: var(--bg-color-2);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 4em -3em black;
+        
+        .loading {
+            margin: 0 auto;
+        }
+        
+        .dialog-content {
+            overflow: hidden scroll;
+            
+            &::-webkit-scrollbar {
+                &-corner,
+                &-track,
+                &-thumb,
+                &-thumb:hover {
+                    background-color: #fff0;
+                }
+            }
+            
+            .buttons {
+                display: flex;
+                gap: .5em;
+                justify-content: center;
+            }
+            
+            ul {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                
+                li {
+                    user-select: none;
+                    padding: .5em 1em;
+                    
+                    &:hover {
+                        background-color: var(--bg-color-5);
+                    }
+                    
+                    &:active {
+                        background-color: $bg-active-more !important;
+                        color: black;
+                    }
+                    
+                    &.active {
+                        background-color: $bg-active;
+                    }
+                }
+            }
+        }
+    }
+}

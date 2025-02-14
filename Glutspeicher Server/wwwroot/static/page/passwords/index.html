@@ -1,0 +1,69 @@
+<div data-page="passwords">
+    <h1>
+        Passwords
+    </h1>
+    <div class="toolbar">
+        <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
+        <button class="clone primary with-text" disabled style="background-image: url(static/res/contentcopy.svg); ">Clone</button>
+        <div style="flex: 1; "></div>
+        <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
+        <button class="action auto-type with-text" style="background-image: url(static/res/keyboard.svg); white-space: nowrap; " disabled>Auto-Type</button>
+        <button class="action rdp with-text" style="background-image: url(static/res/remotedesktop.svg); " disabled>RDP</button>
+        <button class="action ssh with-text" style="background-image: url(static/res/console.svg); " disabled>SSH</button>
+        <button class="action web with-text" style="background-image: url(static/res/externallink.svg); " disabled>Web</button>
+        <div style="flex: 3; "></div>
+        <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+    </div>
+    <div class="search">
+        <input type="text" placeholder="Search" />
+    </div>
+    <div class="content scrollable">
+        <div class="loading" style="margin: 1em; "></div>
+        <div class="items"></div>
+    </div>
+    <button class="no-limit negative">Load All</button>
+    <x-dialog class="with-backdrop-blur">
+        <div class="field">
+            <label>Name</label>
+            <input class="name" type="text">
+        </div>
+        <div class="field">
+            <label>URI</label>
+            <input class="uri" type="text">
+        </div>
+        <div class="field">
+            <label>Username</label>
+            <input class="username" type="text">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input class="password" type="password">
+        </div>
+        <x-foldout data-title="Addional Fields">
+            <div class="field">
+                <label>TOTP</label>
+                <input class="totp" type="text">
+            </div>
+            <div class="field">
+                <label>Relay</label>
+                <div>
+                    <input class="relay" type="text" readonly>
+                    <button></button>
+                </div>
+            </div>
+            <div class="field">
+                <label>Source</label>
+                <input class="source" type="text">
+            </div>
+            <div class="field">
+                <label>Section</label>
+                <input class="section" type="text">
+            </div>
+            <div class="field">
+                <label>Description</label>
+                <textarea class="description"></textarea>
+            </div>
+        </x-foldout>
+    </x-dialog>
+    <x-dialog class="with-backdrop with-big-shadow"></x-dialog>
+</div>

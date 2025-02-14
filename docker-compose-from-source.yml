@@ -1,0 +1,12 @@
+﻿services:
+  app:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    ports:
+      - 8100:80
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../stacks/glutspeicher:/app
+    environment:
+      - TZ=Europe/Vienna
+    working_dir: /app
+    entrypoint: ["./Glutspeicher Server"]

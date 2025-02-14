@@ -1,0 +1,57 @@
+@font-face {
+    font-family: Rubik;
+    src: url(../res/rubik.ttf);
+}
+
+@font-face {
+    font-family: DejaVu;
+    src: url(../res/dejavu.ttf);
+}
+
+// include root.scss
+
+::-webkit-scrollbar {
+    width: .25rem;
+    height: .25rem;
+    
+    &-corner,
+    &-track {
+        background-color: #fff1;
+        border-radius: .125em;
+    }
+    
+    &-thumb,
+    &-thumb:hover {
+        background-color: #fff4;
+        border-radius: .125em;
+    }
+}
+
+::placeholder {
+    color: var(--fg-placeholder);
+}
+
+body:not(.animations) * {
+    &, &::before, &::after {
+        transition: none !important;
+    }
+}
+
+// include base.scss
+
+.loading {
+    width: 4em;
+    height: 4em;
+    background-image: url(../res/loading.svg);
+    background-size: 100%;
+}
+
+// include app.scss
+// include button.scss
+// include custom.scss
+// include dialog.scss
+// include foldout.scss
+// include nav.scss
+// include pages.scss
+
+// include ../page/*.scss

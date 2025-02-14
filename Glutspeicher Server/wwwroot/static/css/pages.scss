@@ -1,0 +1,37 @@
+#pages {
+    flex: 5;
+    overflow: hidden;
+    padding: 1.5em 1em 1em 1.5em;
+    background-color: var(--bg-color-2);
+    
+    &:has([data-page].visible) {
+        overflow-y: auto;
+    }
+    
+    &:has(.scrollable) {
+        display: flex;
+    }
+    
+    .scrollable {
+        overflow: auto scroll;
+    }
+    
+    [data-page] {
+        flex: 1;
+        transition: opacity .1s, translate .1s;
+        opacity: 0;
+        translate: -1em 0;
+        display: flex;
+        flex-direction: column;
+        margin-inline: auto;
+        
+        &.fadeout {
+            translate: 1em 0;
+        }
+        
+        &.visible {
+            opacity: 1;
+            translate: 0 0;
+        }
+    }
+}

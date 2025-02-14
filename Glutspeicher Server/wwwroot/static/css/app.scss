@@ -1,0 +1,16 @@
+#app {
+    flex: 1;
+    display: none;
+    overflow: hidden;
+    
+    &.loaded {
+        display: flex;
+    }
+    
+    &:not(.loaded),
+    &.locked {
+        nav {
+            pointer-events: none;
+        }
+    }
+}

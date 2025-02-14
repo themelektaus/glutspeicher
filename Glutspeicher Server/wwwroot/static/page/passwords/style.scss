@@ -1,0 +1,173 @@
+#pages:has([data-page="passwords"]) {
+    overflow-y: hidden !important;
+}
+
+[data-page="passwords"] {
+    
+    .toolbar {
+        margin-block-end: 1em;
+        display: flex;
+        gap: .5em;
+    }
+    
+    .search {
+        display: flex;
+        
+        input {
+            flex: 1;
+        }
+    }
+    
+    .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1em 1em 1em 0;
+        
+        .items {
+            display: flex;
+            flex-direction: column;
+            
+            .item {
+                display: grid;
+                grid-template-columns: 2.5fr 2fr 2fr 7.75em 3fr 1.25fr 1.25fr;
+                padding: .5em;
+                
+                &:hover {
+                    background-color: var(--bg-color-4);
+                }
+                
+                &.selected {
+                    background-color: $bg-active-less;
+                }
+                
+                > .username {
+                    display: flex;
+                    
+                    > span {
+                        max-width: calc(100% - 1.5em);
+                    }
+                }
+                
+                > .password {
+                    display: flex;
+                    align-items: center;
+                }
+                
+                > .password > span {
+                    max-width: calc(100% - 3em);
+                }
+                
+                > div,
+                > .username > span,
+                > .password > span,
+                > .uri > span.url {
+                    position: relative;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                
+                .uri {
+                    display: flex;
+                    color: $bg-active-more;
+                    
+                    .relay,
+                    .scheme {
+                        color: var(--fg-text);
+                        padding: 0 .325em;
+                        margin-inline: 0 .25em;
+                    }
+                    
+                    .relay {
+                        background-color: $bg-primary;
+                    }
+                    
+                    .scheme {
+                        background-color: $bg-active-less;
+                    }
+                }
+            }
+        }
+    }
+    
+    button.no-limit {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        translate: -100% 0;
+        opacity: 1;
+        pointer-events: all;
+        transition: translate .2s, opacity .2s;
+        
+        &.hidden {
+            translate: -100% 2em;
+            opacity: 0;
+            pointer-events: none;
+        }
+    }
+}
+
+:has([data-page="passwords"]) {
+    
+    x-dialog {
+        
+        .dialog-window {
+            width: 100%;
+            max-width: 40em;
+        }
+        
+        .dialog-top {
+            padding: .5em .5em .5em .625em;
+            font-size: 1.25em;
+        }
+        
+        .dialog-content {
+            display: flex;
+            flex-direction: column;
+            gap: .5em;
+            padding: 1em 3em;
+            
+            x-foldout.visible .content {
+                display: flex;
+                flex-direction: column;
+                gap: .5em;
+            }
+            
+            .field {
+                display: flex;
+                align-items: center;
+                gap: 1em;
+                
+                label {
+                    flex: 1;
+                    text-align: right;
+                }
+                
+                label + input,
+                label + textarea,
+                label + div {
+                    flex: 2;
+                    min-width: 0;
+                }
+                
+                label + div {
+                    flex: 2.095;
+                    overflow: hidden;
+                }
+                
+                label:has(+ textarea) {
+                    align-self: flex-start;
+                    margin-top: .325em;
+                }
+            }
+        }
+        
+        .dialog-bottom {
+            display: flex;
+            gap: .5em;
+            padding: .5em .5em 1em;
+            margin: 0 auto;
+        }
+    }
+}
