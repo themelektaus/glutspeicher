@@ -1,13 +1,13 @@
 ﻿using Renci.SshNet;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Glutspeicher.Agent;
 
 public class RelaySession(string sourceNetwork, string destinationHost, ushort destinationPort)
 {
+    const string WD = "/etc/glutspeicher/relay/ports";
+
     public ushort Port { get; private set; }
 
     static SshClient CreateSshClient(string hostname, ushort port, string username, string password)
@@ -17,11 +17,6 @@ public class RelaySession(string sourceNetwork, string destinationHost, ushort d
 
     public bool Start(string hostname, ushort port, string username, string password, ushort minPort, ushort maxPort)
     {
-        if (!SetupPort(minPort, maxPort))
-        {
-            return false;
-        }
-
         var sshClient = CreateSshClient(hostname, port, username, password);
         if (sshClient is null)
         {
@@ -33,47 +28,67 @@ public class RelaySession(string sourceNetwork, string destinationHost, ushort d
             return false;
         }
 
+        if (!SetupPort(sshClient, minPort, maxPort))
+        {
+            return false;
+        }
+
         DeleteNatRule(sshClient, Port);
         CreateNatRule(sshClient);
 
         return Disconnect(sshClient);
     }
 
-    bool SetupPort(ushort minPort, ushort maxPort)
+    bool SetupPort(SshClient sshClient, ushort minPort, ushort maxPort)
     {
-        var usedPorts = new List<FileInfo>();
+        string output;
 
-        for (var _port = minPort; _port <= maxPort; _port++)
+        Run(sshClient, $"mkdir -p {WD}");
+
+        using (var command = sshClient.CreateCommand($"ls -tr {WD}"))
         {
-            if (File.Exists(_port.ToString()))
+            var usedPorts = command.Execute()?
+                .Split("\n")
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => ushort.TryParse(x, out var y) ? y : 0)
+                .Where(x => x != 0) ?? [];
+
+            for (ushort port = minPort; port <= maxPort; port++)
             {
-                usedPorts.Add(new(_port.ToString()));
+                if (!usedPorts.Contains(port))
+                {
+                    Port = port;
+                    goto Success;
+                }
             }
         }
 
-        var port = minPort;
-
-        while (port <= maxPort)
+        using (var command = sshClient.CreateCommand($"ls -tr {WD} | head -1"))
         {
-            if (usedPorts.Any(x => x.Name == port.ToString()))
-            {
-                port++;
-                continue;
-            }
-
-            Port = port;
-            return true;
+            output = command.Execute()?.Trim() ?? string.Empty;
         }
 
-        if (usedPorts.Count == 0)
+        if (output == string.Empty)
         {
             return false;
         }
 
-        var usedPort = usedPorts.OrderBy(x => x.LastWriteTimeUtc).FirstOrDefault();
-        Port = ushort.Parse(usedPort.Name);
-        usedPort.Delete();
+        if (!ushort.TryParse(output.Trim(), out var exstingPort))
+        {
+            return false;
+        }
+
+        Port = exstingPort;
+
+    Success:
+        Run(sshClient, $"touch {WD}/{Port}");
+
         return true;
+    }
+
+    static void ReleasePort(SshClient sshClient, ushort port)
+    {
+        Run(sshClient, $"rm {WD}/{port}");
     }
 
     public bool Stop(string hostname, ushort port, string username, string password)
@@ -90,6 +105,7 @@ public class RelaySession(string sourceNetwork, string destinationHost, ushort d
         }
 
         DeleteNatRule(sshClient, Port);
+        ReleasePort(sshClient, Port);
 
         return Disconnect(sshClient);
     }
@@ -133,21 +149,16 @@ public class RelaySession(string sourceNetwork, string destinationHost, ushort d
 
         Run(sshClient, $"{iptables} PREROUTING {p} {s} {d} {j}");
         Run(sshClient, $"{iptables} OUTPUT {p} {d} {j}");
-
-        using var _ = File.Open(Port.ToString(), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-        File.SetLastWriteTimeUtc(Port.ToString(), DateTime.UtcNow);
-    }
-
-    static void Run(SshClient sshClient, string commandText)
-    {
-        sshClient.RunCommand(commandText).Dispose();
     }
 
     static void DeleteNatRule(SshClient sshClient, ushort port)
     {
         Run(sshClient, $"eval \"$(iptables -t nat --list-rules | grep '\\-\\-dport {port}' | sed 's/^-A /iptables -t nat -D /g')\"");
+    }
 
-        File.Delete(port.ToString());
+    static void Run(SshClient sshClient, string commandText)
+    {
+        sshClient.RunCommand(commandText).Dispose();
     }
 
     public static void DeleteAllNatRules(string hostname, ushort port, string username, string password, ushort minPort, ushort maxPort)
@@ -166,6 +177,7 @@ public class RelaySession(string sourceNetwork, string destinationHost, ushort d
         for (var _port = minPort; _port <= maxPort; _port++)
         {
             DeleteNatRule(sshClient, _port);
+            ReleasePort(sshClient, _port);
         }
 
         Disconnect(sshClient);
