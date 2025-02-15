@@ -6,6 +6,8 @@ namespace Glutspeicher.Server.Context;
 
 public class LiteDbContext : IDisposable
 {
+    public static readonly string path = Path.Combine("Data", "Database.litedb");
+
     static readonly SemaphoreSlim @lock = new(1, 1);
 
     public LiteDatabase Database { get; }
@@ -20,7 +22,7 @@ public class LiteDbContext : IDisposable
 
         try
         {
-            Database = new(Path.Combine("Data", "Database.litedb"));
+            Database = new(path);
         }
         catch
         {
@@ -36,5 +38,10 @@ public class LiteDbContext : IDisposable
             Database?.Dispose();
             @lock.Release();
         }
+    }
+
+    public static FileStream Read()
+    {
+        return new FileStream(path, FileMode.Open, FileAccess.Read);
     }
 }

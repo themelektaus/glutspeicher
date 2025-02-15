@@ -10,6 +10,8 @@ public static class ExtensionMethods
     {
         app.MapGet("/api", Api.Get);
 
+        app.MapGet("/api/database", Api.GetDatabse);
+
 
 
         app.MapGet("/api/items", Api.Items.GetAll);

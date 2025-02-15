@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Routing;
+using System.IO;
 
 namespace Glutspeicher.Server.Mapping;
 
@@ -50,5 +51,14 @@ public static partial class Api
         }
 
         return endpoints.OrderBy(x => x.path).ThenBy(x => x.method).ToList();
+    }
+
+    public static IResult GetDatabse()
+    {
+        return Results.File(
+            LiteDbContext.Read(),
+            "application/octet-stream",
+            Path.GetFileName(LiteDbContext.path)
+        );
     }
 }

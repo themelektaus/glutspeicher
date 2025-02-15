@@ -65,7 +65,7 @@ class GeneratorsPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
-        this.$generateOfflineFile.on(`click`, this.ongenerateOfflineFile.bind(this))
+        this.$generateOfflineFile.on(`click`, this.onGenerateOfflineFile.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
     }
     
@@ -131,7 +131,7 @@ class GeneratorsPage extends Page
         }
     }
     
-    async ongenerateOfflineFile()
+    async onGenerateOfflineFile()
     {
         const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
         

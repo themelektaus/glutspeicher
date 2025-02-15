@@ -11,6 +11,7 @@ class SettingsPage extends Page
         super.init()
         
         this.$animations = this.$.query(`.animations`)
+        this.$downloadDatabase = this.$.query(`.downloadDatabase`)
     }
     
     async start()
@@ -24,10 +25,16 @@ class SettingsPage extends Page
             this.data.save()
             App.updateBody()
         })
+        
+        this.$downloadDatabase.on(`click`, () =>
+        {
+            location.href = `api/database`
+        })
     }
     
     stop()
     {
         this.$animations.off(`change`)
+        this.$downloadDatabase.off(`change`)
     }
 }

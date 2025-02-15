@@ -1,3 +1,14 @@
 [data-page="settings"] {
     
+    h2 {
+        margin: .5em 0;
+    }
+    
+    h2:not(:first-of-type) {
+        margin-top: 2em;
+    }
+    
+    .fields {
+        margin: .5em;
+    }
 }
