@@ -54,6 +54,10 @@
                     align-items: center;
                 }
                 
+                > .password.generated {
+                    color: $bg-active-more;
+                }
+                
                 > .password > span {
                     max-width: calc(100% - 3em);
                 }
@@ -159,6 +163,29 @@
                 label:has(+ textarea) {
                     align-self: flex-start;
                     margin-top: .325em;
+                }
+                
+                input.dirty {
+                    outline: .125em solid $bg-active-more;
+                    background-color: $bg-active-less;
+                }
+                
+                &.generatedPasswordInfo {
+                    padding: 0;
+                    margin-bottom: -.325em;
+                    
+                    > div {
+                        flex: 1;
+                    }
+                    
+                    > div + div {
+                        flex: 2.1;
+                        display: flex;
+                        font-size: .8em;
+                        color: $bg-active-more;
+                        gap: .25em;
+                        padding-inline: .125em;
+                    }
                 }
             }
         }

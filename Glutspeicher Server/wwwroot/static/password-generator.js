@@ -3,6 +3,7 @@ md5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};funct
 class PasswordGenerator
 {
     length = 0
+    
     rules = []
     
     generateHash(str)
@@ -73,7 +74,9 @@ class PasswordGenerator
 function generatePassword(length, answers)
 {
     const generator = new PasswordGenerator
-
+    
+    generator.length = length
+    
     generator.rules.push(
         { characters: `abcdefghjkmnpqrstuvwxyz`, weight: 4 },
         { characters: `ABCDEFGHJKMNPQRSTUVWXYZ`, weight: 3 },
@@ -81,8 +84,6 @@ function generatePassword(length, answers)
         { characters: `!@#$%?`, weight: 2 },
         { characters: `*-=+`, weight: 1 }
     )
-
-    generator.length = length
     
     const str = answers
         .split(`\r`)

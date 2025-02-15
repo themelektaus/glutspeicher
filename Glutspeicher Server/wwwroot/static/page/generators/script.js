@@ -12,6 +12,7 @@ class GeneratorsPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
+        this.$generateOfflineFile = this.$.query(`.generate-offline-file`)
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
@@ -64,6 +65,7 @@ class GeneratorsPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$generateOfflineFile.on(`click`, this.ongenerateOfflineFile.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
     }
     
@@ -83,6 +85,7 @@ class GeneratorsPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$generateOfflineFile.off(`click`)
         this.$delete.off(`click`)
     }
     
@@ -126,6 +129,112 @@ class GeneratorsPage extends Page
             this.selectedItemId = 0
             this.refresh()
         }
+    }
+    
+    async ongenerateOfflineFile()
+    {
+        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
+        
+        const $head = create(`head`)
+        
+        $head.appendChild(create(`title`).setInnerHtml(`Password Recovery File`))
+        $head.appendChild(create(`style`).setInnerHtml(`
+            
+            html, body {
+                min-height: 100vh;
+            }
+            
+            body {
+                margin: 0;
+                background-color: #111;
+                display: flex;
+            }
+            
+            body, input {
+                font-size: 1em;
+                color: white;
+            }
+            
+            div {
+                max-width: 30em;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: .5em;
+                padding: .5em;
+                margin: auto;
+            }
+            
+            input {
+                padding: .5em;
+                outline: none;
+                background-color: #333;
+                border: none;
+                width: 100%;
+            }
+                
+            #password {
+                font-family: monospace;
+                font-size: 1.25em;
+            }
+            
+        `))
+        
+        const $body = create(`body`)
+        
+        const $div = $body.create(`div`)
+        
+        for (const question of (item.questions ?? ``).split(`\r`).map(x => x.split(`\n`)).flat())
+        {
+            if (question.trim())
+            {
+                $div.create(`input`).setAttr(`placeholder`, question).setAttr(
+                    `type`,
+                    (
+                        question.toLowerCase() == `passwort` ||
+                        question.toLowerCase() == `password` ||
+                        question.includes(`PIN`)
+                    ) ? `password` : `text`
+                )
+            }
+        }
+        
+        $div.create(`input`).setAttr(`placeholder`, `Domain`)
+        $div.create(`input`).setAttr(`placeholder`, `Username`)
+        $div.create(`input`).setAttr(`id`, `password`).setAttr(`readonly`, ``)
+        
+        const scriptResponse = await fetch(`static/password-generator.js`)
+        const scriptText = await scriptResponse.text()
+        
+        const script = `<script>${scriptText}
+const $inputs = [...document.querySelectorAll("input:not([readonly])")]
+$inputs.forEach($ =>
+{
+    const onInput = () =>
+    {
+        let answers = ""
+        
+        for (const $input of $inputs)
+        {
+            answers += $input.value
+        }
+        
+        document.querySelector('#password').value = generatePassword(${item.length}, answers)
+    }
+    $.addEventListener("input", onInput)
+    onInput()
+})</script>`
+        
+        const html = `<!doctype html><head>${$head.innerHTML}</head><body>${$body.innerHTML}${script}</body></html>`
+        
+        var $a = create(`a`)
+            .setAttr(`href`, `data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+            .setAttr(`download`, `${item.name}.html`)
+            .setStyle(`display`, `none`)
+        document.body.appendChild($a)
+        $a.click()
+        document.body.removeChild($a)
     }
     
     refresh()
@@ -177,11 +286,13 @@ class GeneratorsPage extends Page
         if (item)
         {
             this.$edit.setAttr(`disabled`, null)
+            this.$generateOfflineFile.setAttr(`disabled`, null)
             this.$delete.setAttr(`disabled`, null)
         }
         else
         {
             this.$edit.setAttr(`disabled`, ``)
+            this.$generateOfflineFile.setAttr(`disabled`, ``)
             this.$delete.setAttr(`disabled`, ``)
         }
     }

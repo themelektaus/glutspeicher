@@ -59,35 +59,64 @@ class PasswordsPage extends Page
             
             $generator: this.dialog.$content.query(`.generator`),
             $generatedPassword: this.dialog.$content.query(`.generatedPassword`),
+            $generatedPasswordInfo: this.dialog.$content.query(`.generatedPasswordInfo`),
+            
+            getDomain: function()
+            {
+                let domain = $.query(`.uri`).value?.trim() || ``
+                if (domain)
+                {
+                    if (!domain.startsWith(`//`) && !domain.includes(`://`))
+                    {
+                        domain = `//${domain}`
+                    }
+                    
+                    const a = create(`a`);
+                    a.href = domain;
+                    domain = a.host
+                    
+                    while (domain.split(`.`).length > 2)
+                    {
+                        domain = [...domain.split(`.`)]
+                        domain.splice(0, 1)
+                        domain = domain.join(`.`)
+                    }
+                }
+                return domain
+            },
+            
+            getUsername: function()
+            {
+                return $.query(`.username`).value?.trim() || ``
+            },
             
             refreshGeneratedPassword: async function()
             {
                 const generator = (await PasswordsPage.getGenerators()).find(x => x.id == this.$generator.getData(`value`))
                 if (generator?.length)
                 {
-                    let uri = $.query(`.uri`).value?.trim() || ``
-                    if (uri)
-                    {
-                        if (!uri.startsWith(`//`) && !uri.includes(`://`))
-                        {
-                            uri = `//${uri}`
-                        }
-                        
-                        const a = create(`a`);
-                        a.href = uri;
-                        uri = a.host
-                    }
+                    const domain = this.getDomain()
+                    const username = this.getUsername()
                     
-                    const username = $.query(`.username`).value?.trim() || ``
+                    const newValue = generatePassword(
+                        generator.length,
+                        generator.answers + domain + username
+                    )
                     
-                    this.$generatedPassword.value = generatePassword(generator.length, generator.answers + uri + username)
+                    const dirty = this.$generatedPassword.getData(`value`) != newValue
+                    this.$generatedPassword.value = newValue
+                    this.$generatedPassword.setClass(`dirty`, dirty)
                     this.$generatedPassword.parentNode.setStyle(`display`, null)
+                    this.$generatedPasswordInfo.query(`.domain`).setInnerHtml(domain)
+                    this.$generatedPasswordInfo.query(`.username`).setInnerHtml(username)
+                    this.$generatedPasswordInfo.setStyle(`display`, null)
                     $.query(`.password`).parentNode.setStyle(`display`, `none`)
                 }
                 else
                 {
                     this.$generatedPassword.value = ``
                     this.$generatedPassword.parentNode.setStyle(`display`, `none`)
+                    this.$generatedPasswordInfo.setStyle(`display`, `none`)
                     $.query(`.password`).parentNode.setStyle(`display`, null)
                 }
             },
@@ -494,7 +523,7 @@ class PasswordsPage extends Page
             
             if (password)
             {
-                $item.query(`.password`).setInnerHtml(
+                $item.query(`.password`).setClass(`generated`, item.generatedPassword).setInnerHtml(
                     `<span>${password}</span>` +
                     `<span>${Array(password.length + 1).join(`•`)}</span>` +
                     `<button class="eye"></button>` +
@@ -587,16 +616,9 @@ class PasswordsPage extends Page
         form.$relay.value = relay.hostname
         form.$relay.setData(`value`, relay.id)
         
-        if (item.generatedPassword)
-        {
-            form.$generatedPassword.parentNode.setStyle(`display`, null)
-            this.dialog.$.query(`.password`).parentNode.setStyle(`display`, `none`)
-        }
-        else
-        {
-            await form.refreshGeneratedPassword()
-        }
+        form.$generatedPassword.setData(`value`, item.generatedPassword || ``)
         
+        await form.refreshGeneratedPassword()
         await this.dialog.show()
         
         form.$save.on(`click`, async () =>

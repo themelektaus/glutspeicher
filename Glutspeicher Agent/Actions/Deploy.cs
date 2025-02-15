@@ -99,8 +99,14 @@ public class Deploy
 
         sshClient.Connect();
         sshClient.RunCommand($"docker stop {dockerContainerName}");
-        Directory.Delete(Path.Combine(targetPath, "wwwroot"), recursive: true);
+
+        if (Directory.Exists(Path.Combine(targetPath, "wwwroot")))
+        {
+            Directory.Delete(Path.Combine(targetPath, "wwwroot"), recursive: true);
+        }
+
         CopyFiles(tempFolder.FullName, targetPath);
+
         sshClient.RunCommand($"docker start {dockerContainerName}");
         sshClient.Disconnect();
 
