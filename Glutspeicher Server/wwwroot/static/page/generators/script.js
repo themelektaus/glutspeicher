@@ -1,9 +1,9 @@
-class RelaysPage extends Page
+class GeneratorsPage extends Page
 {
     static _ = App.use({
         type: this,
         groupType: Page,
-        selector: `[data-page="relays"]`
+        selector: `[data-page="generators"]`
     })
     
     init()
@@ -69,7 +69,7 @@ class RelaysPage extends Page
     
     async lateStart()
     {
-        if (RelaysPage.items === undefined)
+        if (GeneratorsPage.items === undefined)
         {
             await this.load()
         }
@@ -90,10 +90,10 @@ class RelaysPage extends Page
     {
         App.beginLock()
     
-        RelaysPage.items = []
+        GeneratorsPage.items = []
         this.refresh()
         
-        await RelaysPage.loadItems()
+        await GeneratorsPage.loadItems()
         this.refresh()
         
         App.endLock()
@@ -101,7 +101,7 @@ class RelaysPage extends Page
     
     static async loadItems()
     {
-        RelaysPage.items = (await fetchGet(`api/relays`)).data ?? []
+        GeneratorsPage.items = (await fetchGet(`api/generators`)).data ?? []
     }
     
     async onAdd()
@@ -111,18 +111,18 @@ class RelaysPage extends Page
     
     async onEdit()
     {
-        const item = RelaysPage.items.find(x => x.id == this.selectedItemId)
+        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
     }
     
     async onDelete()
     {
         const id = this.selectedItemId
-        const result = await fetchDelete(`api/relays/${id}`)
+        const result = await fetchDelete(`api/generators/${id}`)
         
         if (result.success)
         {
-            RelaysPage.items.splice(RelaysPage.items.indexOf(RelaysPage.items.find(x => x.id == id)), 1)
+            GeneratorsPage.items.splice(GeneratorsPage.items.indexOf(GeneratorsPage.items.find(x => x.id == id)), 1)
             this.selectedItemId = 0
             this.refresh()
         }
@@ -132,7 +132,7 @@ class RelaysPage extends Page
     {
         let $items = [...this.$items.queryAll(`.item`)]
         
-        for (const item of RelaysPage.items)
+        for (const item of GeneratorsPage.items)
         {
             let $item = $items.find($ => $.dataset.id == item.id)
             
@@ -147,7 +147,7 @@ class RelaysPage extends Page
                     .setClass(`item`, true)
                     .setData(`id`, item.id)
                 
-                $item.create(`div`).setClass(`hostname`, true)
+                $item.create(`div`).setClass(`name`, true)
                 
                 $item.addEventListener(`click`, () =>
                 {
@@ -156,7 +156,7 @@ class RelaysPage extends Page
                 })
             }
             
-            $item.query(`.hostname`).setInnerHtml(item.hostname)
+            $item.query(`.name`).setInnerHtml(item.name)
         }
         
         for (const $item of $items)
@@ -172,7 +172,7 @@ class RelaysPage extends Page
         const $items = this.$items.queryAll(`.item`)
         $items.forEach($ => $.setClass(`selected`, $.getData(`id`) == this.selectedItemId))
         
-        const item = RelaysPage.items.find(x => x.id == this.selectedItemId)
+        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
         
         if (item)
         {
@@ -219,24 +219,24 @@ class RelaysPage extends Page
             
             if (item.id)
             {
-                const result = await fetchPut(`api/relays`, data)
+                const result = await fetchPut(`api/generators`, data)
                 
                 if (result.success)
                 {
-                    const index = RelaysPage.items.indexOf(RelaysPage.items.find(x => x.id == item.id))
+                    const index = GeneratorsPage.items.indexOf(GeneratorsPage.items.find(x => x.id == item.id))
                     
-                    RelaysPage.items[index] = data
+                    GeneratorsPage.items[index] = data
                     this.refresh()
                 }
             }
             else
             {
-                const result = await fetchPost(`api/relays`, data)
+                const result = await fetchPost(`api/generators`, data)
                 
                 if (result.success)
                 {
                     const item = result.data
-                    RelaysPage.items.push(item)
+                    GeneratorsPage.items.push(item)
                     
                     this.selectedItemId = item.id
                     this.refresh()

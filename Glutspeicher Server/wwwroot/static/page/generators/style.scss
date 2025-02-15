@@ -1,4 +1,4 @@
-[data-page="relays"] {
+[data-page="generators"] {
     
     .toolbar {
         margin-block-end: 1em;
@@ -40,13 +40,13 @@
     }
 }
 
-:has([data-page="relays"]) {
+:has([data-page="generators"]) {
     
     x-dialog {
         
         .dialog-window {
             width: 100%;
-            max-width: 40em;
+            max-width: 30em;
         }
         
         .dialog-top {
@@ -70,9 +70,19 @@
                     text-align: right;
                 }
                 
-                label + input {
-                    flex: 2.25;
+                label + input,
+                label + textarea {
+                    flex: 3;
                     min-width: 0;
+                }
+                
+                label + textarea {
+                    height: 15em;
+                }
+                
+                label:has(+ textarea) {
+                    align-self: flex-start;
+                    margin-top: .325em;
                 }
             }
         }

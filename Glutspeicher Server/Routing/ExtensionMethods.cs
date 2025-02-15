@@ -24,6 +24,19 @@ public static class ExtensionMethods
 
 
 
+        app.MapGet("/api/generators", Api.Generators.GetAll);
+
+        app.MapGet("/api/generators/{id}", Api.Generators.Get);
+
+        app.MapPost("/api/generators", Api.Generators.Post);
+
+        app.MapPut("/api/generators", Api.Generators.Put);
+
+        app.MapDelete("/api/generators/{id}", Api.Generators.Delete);
+
+
+
+
         app.MapGet("/api/relays", Api.Relays.GetAll);
 
         app.MapGet("/api/relays/{id}", Api.Relays.Get);

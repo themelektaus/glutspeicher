@@ -39,6 +39,17 @@
             <label>Password</label>
             <input class="password" type="password">
         </div>
+        <div class="field">
+            <label>Generator</label>
+            <div>
+                <input class="generator" type="text" readonly>
+                <button></button>
+            </div>
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input class="generatedPassword" type="text" readonly>
+        </div>
         <x-foldout data-title="Addional Fields">
             <div class="field">
                 <label>TOTP</label>
@@ -65,5 +76,6 @@
             </div>
         </x-foldout>
     </x-dialog>
+    <x-dialog class="with-backdrop with-big-shadow"></x-dialog>
     <x-dialog class="with-backdrop with-big-shadow"></x-dialog>
 </div>

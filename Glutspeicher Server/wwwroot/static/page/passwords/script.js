@@ -57,6 +57,41 @@ class PasswordsPage extends Page
         this.dialog.form = {
             $inputs: [],
             
+            $generator: this.dialog.$content.query(`.generator`),
+            $generatedPassword: this.dialog.$content.query(`.generatedPassword`),
+            
+            refreshGeneratedPassword: async function()
+            {
+                const generator = (await PasswordsPage.getGenerators()).find(x => x.id == this.$generator.getData(`value`))
+                if (generator?.length)
+                {
+                    let uri = $.query(`.uri`).value?.trim() || ``
+                    if (uri)
+                    {
+                        if (!uri.startsWith(`//`) && !uri.includes(`://`))
+                        {
+                            uri = `//${uri}`
+                        }
+                        
+                        const a = create(`a`);
+                        a.href = uri;
+                        uri = a.host
+                    }
+                    
+                    const username = $.query(`.username`).value?.trim() || ``
+                    
+                    this.$generatedPassword.value = generatePassword(generator.length, generator.answers + uri + username)
+                    this.$generatedPassword.parentNode.setStyle(`display`, null)
+                    $.query(`.password`).parentNode.setStyle(`display`, `none`)
+                }
+                else
+                {
+                    this.$generatedPassword.value = ``
+                    this.$generatedPassword.parentNode.setStyle(`display`, `none`)
+                    $.query(`.password`).parentNode.setStyle(`display`, null)
+                }
+            },
+            
             $relay: this.dialog.$content.query(`.relay`),
             
             $save: this.dialog.$bottom.create(`button`)
@@ -79,18 +114,61 @@ class PasswordsPage extends Page
             }
         })
         
-        const dialog = dialogs[1]
-        dialog.$window.setStyle(`max-width`, `22em`)
-        dialog.$content.setStyle(`padding`, `1em`)
+        $.query(`.uri`).addEventListener(`input`, async () =>
+        {
+            await this.dialog.form.refreshGeneratedPassword()
+        })
         
-        const $button = this.dialog.form.$relay.parentNode.query(`button`)
-        $button.addEventListener(`click`, async () =>
+        $.query(`.username`).addEventListener(`input`, async () =>
+        {
+            await this.dialog.form.refreshGeneratedPassword()
+        })
+        
+        const dialog1 = dialogs[1]
+        dialog1.$window.setStyle(`max-width`, `22em`)
+        dialog1.$content.setStyle(`padding`, `1em`)
+        
+        const $button1 = this.dialog.form.$generator.parentNode.query(`button`)
+        $button1.addEventListener(`click`, async () =>
         {
             this.dialog.busy = true
             
-            dialog.$content.clearInnerHtml()
+            dialog1.$content.clearInnerHtml()
             
-            const $ul = dialog.$content.create(`ul`)
+            const $ul = dialog1.$content.create(`ul`)
+            
+            for (const generator of await PasswordsPage.getGenerators())
+            {
+                $ul.create(`li`)
+                    .setInnerHtml(generator.name)
+                    .setClass(`active`, generator.id == this.dialog.form.$generator.getData(`value`))
+                    .addEventListener(`click`, async () =>
+                    {
+                        this.dialog.form.$generator.value = generator.name
+                        this.dialog.form.$generator.setData(`value`, generator.id)
+                        await this.dialog.form.refreshGeneratedPassword()
+                        await dialog1.hide()
+                    })
+            }
+            
+            await dialog1.show()
+            await dialog1.wait()
+            
+            this.dialog.busy = false
+        })
+        
+        const dialog2 = dialogs[2]
+        dialog2.$window.setStyle(`max-width`, `22em`)
+        dialog2.$content.setStyle(`padding`, `1em`)
+        
+        const $button2 = this.dialog.form.$relay.parentNode.query(`button`)
+        $button2.addEventListener(`click`, async () =>
+        {
+            this.dialog.busy = true
+            
+            dialog2.$content.clearInnerHtml()
+            
+            const $ul = dialog2.$content.create(`ul`)
             
             for (const relay of await PasswordsPage.getRelays())
             {
@@ -101,15 +179,25 @@ class PasswordsPage extends Page
                     {
                         this.dialog.form.$relay.value = relay.hostname
                         this.dialog.form.$relay.setData(`value`, relay.id)
-                        await dialog.hide()
+                        await dialog2.hide()
                     })
             }
             
-            await dialog.show()
-            await dialog.wait()
+            await dialog2.show()
+            await dialog2.wait()
             
             this.dialog.busy = false
         })
+    }
+    
+    static async getGenerators()
+    {
+        if (GeneratorsPage.items === undefined)
+        {
+            await GeneratorsPage.loadItems()
+        }
+        
+        return [ { id: 0, name: `None` }, ...GeneratorsPage.items ]
     }
     
     static async getRelays()
@@ -208,7 +296,7 @@ class PasswordsPage extends Page
             title: item.name,
             text: [
                 item.username,
-                item.password
+                item.generatedPassword || item.password
             ]
         }
         
@@ -282,7 +370,7 @@ class PasswordsPage extends Page
         
         await this.onRelay([{ scheme: `rdp`, defaultPort: `3389` }], `Mstsc`, (data, item) => {
             data.username = item.username
-            data.password = item.password
+            data.password = item.generatedPassword || item.password
         })
     }
     
@@ -292,7 +380,7 @@ class PasswordsPage extends Page
         
         await this.onRelay([{ scheme: `ssh`, defaultPort: `22` }], `Ssh`, (data, item) => {
             data.username = item.username
-            data.password = item.password
+            data.password = item.generatedPassword || item.password
         })
     }
     
@@ -402,13 +490,15 @@ class PasswordsPage extends Page
                 $item.query(`.username`).clearInnerHtml()
             }
             
-            if (item.password)
+            let password = item.generatedPassword || item.password
+            
+            if (password)
             {
                 $item.query(`.password`).setInnerHtml(
-                    `<span>${item.password}</span>` +
-                    `<span>${Array(item.password.length + 1).join(`•`)}</span>` +
+                    `<span>${password}</span>` +
+                    `<span>${Array(password.length + 1).join(`•`)}</span>` +
                     `<button class="eye"></button>` +
-                    `<button class="copy" data-value="${item.password}"></button>`
+                    `<button class="copy" data-value="${password}"></button>`
                 )
             }
             else
@@ -489,9 +579,23 @@ class PasswordsPage extends Page
         this.dialog.$top.setInnerHtml(item.id ? `Edit` : `New`)
         form.$inputs.forEach($ => $.value = item[$.classList[0]] ?? ($.type == `number` ? 0 : ``))
         
+        const generator = (await PasswordsPage.getGenerators()).find(x => x.id == (item.generatorId ?? 0)) ?? { id: item.generatorId, name: item.generatorId }
+        form.$generator.value = generator.name
+        form.$generator.setData(`value`, generator.id)
+        
         const relay = (await PasswordsPage.getRelays()).find(x => x.id == (item.relayId ?? 0)) ?? { id: item.relayId, hostname: item.relayId }
         form.$relay.value = relay.hostname
         form.$relay.setData(`value`, relay.id)
+        
+        if (item.generatedPassword)
+        {
+            form.$generatedPassword.parentNode.setStyle(`display`, null)
+            this.dialog.$.query(`.password`).parentNode.setStyle(`display`, `none`)
+        }
+        else
+        {
+            await form.refreshGeneratedPassword()
+        }
         
         await this.dialog.show()
         
@@ -507,6 +611,7 @@ class PasswordsPage extends Page
             const data = { id: item.id }
             form.$inputs.forEach($ => data[$.classList[0]] = $.type == `number` ? +$.value : $.value)
             
+            data.generatorId = parseInt(form.$generator.getData(`value`))
             data.relayId = parseInt(form.$relay.getData(`value`))
             
             if (item.id)

@@ -12,6 +12,10 @@ public class Item
 
     public string Password { get; set; }
 
+    public long GeneratorId { get; set; }
+
+    public string GeneratedPassword { get; set; }
+
     public string Description { get; set; }
 
     public string Totp { get; set; }
