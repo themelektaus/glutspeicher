@@ -34,9 +34,10 @@ public class Deploy
             throw new($"{nameof(sshPassword)} is null or empty");
         }
 
-        if (!Directory.Exists(targetPath))
+        var targetFolder = new DirectoryInfo(targetPath);
+        if (!targetFolder.Exists)
         {
-            throw new($"{nameof(targetPath)} not exists");
+            throw new($"{nameof(targetFolder)} not exists");
         }
 
         FileInfo solutionFile = null;
@@ -83,7 +84,7 @@ public class Deploy
 
         tempFolder.Create();
 
-        CopyFiles(serverBuild.FullName, tempFolder.FullName);
+        CopyFiles(serverBuild, tempFolder);
 
         Zip(
             Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-server.zip"),
@@ -100,12 +101,13 @@ public class Deploy
         sshClient.Connect();
         sshClient.RunCommand($"docker stop {dockerContainerName}").Dispose();
 
-        if (Directory.Exists(Path.Combine(targetPath, "wwwroot")))
+        var wwwroot = new DirectoryInfo(Path.Combine(targetFolder.FullName, "wwwroot"));
+        if (wwwroot.Exists)
         {
-            Directory.Delete(Path.Combine(targetPath, "wwwroot"), recursive: true);
+            wwwroot.Delete(recursive: true);
         }
 
-        CopyFiles(tempFolder.FullName, targetPath);
+        CopyFiles(tempFolder, targetFolder);
 
         sshClient.RunCommand($"docker start {dockerContainerName}").Dispose();
         sshClient.Disconnect();
@@ -113,21 +115,16 @@ public class Deploy
         tempFolder.Delete(recursive: true);
     }
 
-    static void CopyFiles(string source, string destination)
+    public static void CopyFiles(DirectoryInfo source, DirectoryInfo target)
     {
-        foreach (var x in Directory.GetDirectories(source, "*", SearchOption.AllDirectories))
+        foreach (DirectoryInfo folder in source.GetDirectories())
         {
-            var folder = destination + x[source.Length..];
-
-            if (!Directory.Exists(folder))
-            {
-                Directory.CreateDirectory(folder);
-            }
+            CopyFiles(folder, target.CreateSubdirectory(folder.Name));
         }
 
-        foreach (var x in Directory.GetFiles(source, "*.*", SearchOption.AllDirectories))
+        foreach (FileInfo file in source.GetFiles())
         {
-            File.Copy(x, destination + x[source.Length..], overwrite: true);
+            file.CopyTo(Path.Combine(target.FullName, file.Name));
         }
     }
 
