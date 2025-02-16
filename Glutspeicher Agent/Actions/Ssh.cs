@@ -25,7 +25,7 @@ public class Ssh : Relay
 
         var process = Process.Start(
             new ProcessStartInfo(
-                "ssh", $"{port}{username}{hostname}"
+                "ssh", $"-o StrictHostKeychecking=no -o UserKnownHostsFile=/dev/null {port}{username}{hostname}"
             )
             {
                 UseShellExecute = true
