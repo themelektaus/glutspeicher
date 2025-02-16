@@ -12,15 +12,7 @@ class PasswordsPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
-        this.$clone = this.$.query(`.clone`)
-        this.$autoType = this.$.query(`.auto-type`)
-        this.$rdp = this.$.query(`.rdp`)
-        this.$ssh = this.$.query(`.ssh`)
-        this.$web = this.$.query(`.web`)
         this.$delete = this.$.query(`.delete`)
-        
-        this.$search = this.$.query(`.search`)
-        this.$searchInput = this.$search.query(`input`)
         
         this.$content = this.$.query(`.content`)
         this.$content.addEventListener(`click`, async e =>
@@ -33,6 +25,15 @@ class PasswordsPage extends Page
         })
         
         this.$items = this.$content.query(`.items`)
+        
+        this.$clone = this.$.query(`.clone`)
+        this.$autoType = this.$.query(`.autoType`)
+        this.$rdp = this.$.query(`.rdp`)
+        this.$ssh = this.$.query(`.ssh`)
+        this.$web = this.$.query(`.web`)
+        
+        this.$search = this.$.query(`.search`)
+        this.$searchInput = this.$search.query(`input`)
         
         this.$noLimit = this.$.query(`.no-limit`)
             .setClass(`hidden`, true)
@@ -219,36 +220,17 @@ class PasswordsPage extends Page
         })
     }
     
-    static async getGenerators()
-    {
-        if (GeneratorsPage.items === undefined)
-        {
-            await GeneratorsPage.loadItems()
-        }
-        
-        return [ { id: 0, name: `None` }, ...GeneratorsPage.items ]
-    }
-    
-    static async getRelays()
-    {
-        if (RelaysPage.items === undefined)
-        {
-            await RelaysPage.loadItems()
-        }
-        
-        return [ { id: 0, hostname: `None` }, ...RelaysPage.items ]
-    }
-    
     async start()
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$delete.on(`click`, this.onDelete.bind(this))
+        
         this.$clone.on(`click`, this.onClone.bind(this))
         this.$autoType.on(`click`, this.onAutoType.bind(this))
         this.$rdp.on(`click`, this.onRdp.bind(this))
         this.$ssh.on(`click`, this.onSsh.bind(this))
         this.$web.on(`click`, this.onWeb.bind(this))
-        this.$delete.on(`click`, this.onDelete.bind(this))
         
         this.$search.on(`input`, async () =>
         {
@@ -259,12 +241,39 @@ class PasswordsPage extends Page
     
     async lateStart()
     {
-        if (this.items === undefined)
+        if (PasswordsPage.items === undefined || PasswordsPage.refreshNextTime)
         {
-            App.lock(async () =>
+            if (PasswordsPage.items === undefined && !PasswordsPage.refreshNextTime)
             {
-                await this.load()
-            })
+                PasswordsPage.items = null
+            }
+            
+            PasswordsPage.refreshNextTime = false
+            
+            if (PasswordsPage.items !== undefined)
+            {
+                App.beginLock()
+                
+                this.$.query(`.loading`).setStyle(`display`, null)
+                
+                const items = PasswordsPage.items
+                
+                PasswordsPage.items = []
+                await this.refresh()
+                
+                if (items)
+                {
+                    PasswordsPage.items = items
+                }
+                else
+                {
+                    await PasswordsPage.loadItems()
+                }
+                
+                await this.refresh(() => this.$.query(`.loading`).setStyle(`display`, `none`))
+                
+                App.endLock()
+            }
         }
     }
     
@@ -272,26 +281,19 @@ class PasswordsPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$delete.off(`click`)
+        
         this.$clone.off(`click`)
         this.$autoType.off(`click`)
         this.$rdp.off(`click`)
         this.$web.off(`click`)
-        this.$delete.off(`click`)
         
         this.$search.off(`input`)
     }
     
-    async load()
+    static async loadItems()
     {
-        App.beginLock()
-        
-        this.items = []
-        await this.refresh()
-        
-        this.items = (await fetchGet(`api/items`)).data ?? []
-        await this.refresh(() => this.$.query(`.loading`).remove())
-        
-        App.endLock()
+        PasswordsPage.items = (await fetchGet(`api/items`)).data ?? []
     }
     
     async onAdd()
@@ -301,126 +303,8 @@ class PasswordsPage extends Page
     
     async onEdit()
     {
-        const item = this.items.find(x => x.id == this.selectedItemId)
+        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
-    }
-    
-    async onClone()
-    {
-        let item = this.items.find(x => x.id == this.selectedItemId)
-        item = JSON.parse(JSON.stringify(item))
-        item.id = 0
-        item.name += ` (Clone)`
-        await this.showDialog(item)
-    }
-    
-    onAutoType()
-    {
-        playButtonAnimation(this.$autoType)
-        
-        const item = this.items.find(x => x.id == this.selectedItemId)
-        
-        const data = {
-            type: `AutoType`,
-            title: item.name,
-            text: [
-                item.username,
-                item.generatedPassword || item.password
-            ]
-        }
-        
-        location.href = `glut://${btoa(JSON.stringify(data))}`
-    }
-    
-    async onRelay(rules, type, loadAdditionalData, useWebCommandLine)
-    {
-        const item = this.items.find(x => x.id == this.selectedItemId)
-        
-        let uri = item.uri
-        
-        if (!uri.includes(`://`))
-        {
-            uri = `http://${uri}`
-        }
-        
-        const index = rules.findIndex(x => uri.startsWith(`${x.scheme}://`))
-        
-        if (index != -1)
-        {
-            const rule = rules[index]
-            
-            const hostnameAndPort = uri.substr(rule.scheme.length + 3).split(`:`, 2)
-            
-            if (hostnameAndPort.length < 2)
-            {
-                hostnameAndPort.push(rule.defaultPort)
-            }
-            
-            const data = {
-                type: type,
-                hostname: hostnameAndPort[0],
-                port: +hostnameAndPort[1]
-            }
-            
-            if (loadAdditionalData)
-            {
-                loadAdditionalData(data, item)
-            }
-            
-            if (item.relayId)
-            {
-                const relay = (await PasswordsPage.getRelays()).find(x => x.id == item.relayId)
-                
-                if (relay)
-                {
-                    if (useWebCommandLine && relay.webCommandLine)
-                    {
-                        data.webCommandLine = relay.webCommandLine
-                    }
-                    else
-                    {
-                        data.relayHostname = relay.hostname
-                        data.relaySshPort = relay.sshPort
-                        data.relaySshUsername = relay.sshUsername
-                        data.relaySshPassword = relay.sshPassword
-                        data.relayMinPort = relay.minPort
-                        data.relayMaxPort = relay.maxPort
-                    }
-                }
-            }
-            
-            location.href = `glut://${btoa(JSON.stringify(data))}`
-        }
-    }
-    
-    async onRdp()
-    {
-        playButtonAnimation(this.$rdp)
-        
-        await this.onRelay([{ scheme: `rdp`, defaultPort: `3389` }], `Mstsc`, (data, item) => {
-            data.username = item.username
-            data.password = item.generatedPassword || item.password
-        })
-    }
-    
-    async onSsh()
-    {
-        playButtonAnimation(this.$ssh)
-        
-        await this.onRelay([{ scheme: `ssh`, defaultPort: `22` }], `Ssh`, (data, item) => {
-            data.username = item.username
-            data.password = item.generatedPassword || item.password
-        })
-    }
-    
-    async onWeb()
-    {
-        playButtonAnimation(this.$web)
-        
-        await this.onRelay([{ scheme: `http`, defaultPort: `80` }, { scheme: `https`, defaultPort: `443` }], `Web`, (data, item) => {
-            data.name = item.name,
-            data.uri = item.uri.includes(`://`) ? item.uri : `http://${item.uri}`
-        }, true)
     }
     
     async onDelete()
@@ -430,7 +314,7 @@ class PasswordsPage extends Page
         
         if (result.success)
         {
-            this.items.splice(this.items.indexOf(this.items.find(x => x.id == id)), 1)
+            PasswordsPage.items.splice(PasswordsPage.items.indexOf(PasswordsPage.items.find(x => x.id == id)), 1)
             this.selectedItemId = 0
             await this.refresh()
         }
@@ -440,7 +324,7 @@ class PasswordsPage extends Page
     {
         let $items = [...this.$items.queryAll(`.item`)]
         
-        for (const item of this.items)
+        for (const item of PasswordsPage.items)
         {
             let $item = $items.find($ => $.dataset.id == item.id)
             
@@ -574,16 +458,17 @@ class PasswordsPage extends Page
         const $items = this.$items.queryAll(`.item`)
         $items.forEach($ => $.setClass(`selected`, $.getData(`id`) == this.selectedItemId))
         
-        const item = this.items.find(x => x.id == this.selectedItemId)
+        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
         
         if (item)
         {
             const uri = item.uri ?? ``
             
-            this.$edit.setAttr(`disabled`, null)
+            this.$edit.setAttr(`disabled`, item.id > 0 ? null : ``)
+            this.$delete.setAttr(`disabled`, item.id > 0 ? null : ``)
+            
             this.$clone.setAttr(`disabled`, null)
             this.$autoType.setAttr(`disabled`, null)
-            this.$delete.setAttr(`disabled`, null)
             this.$rdp.setAttr(`disabled`, uri.startsWith(`rdp://`) ? null : ``)
             this.$ssh.setAttr(`disabled`, uri.startsWith(`ssh://`) ? null : ``)
             this.$web.setAttr(`disabled`, (!uri.includes(`://`) || uri.startsWith(`http://`) || uri.startsWith(`https://`)) ? null : ``)
@@ -591,9 +476,10 @@ class PasswordsPage extends Page
         else
         {
             this.$edit.setAttr(`disabled`, ``)
+            this.$delete.setAttr(`disabled`, ``)
+            
             this.$clone.setAttr(`disabled`, ``)
             this.$autoType.setAttr(`disabled`, ``)
-            this.$delete.setAttr(`disabled`, ``)
             this.$rdp.setAttr(`disabled`, ``)
             this.$ssh.setAttr(`disabled`, ``)
             this.$web.setAttr(`disabled`, ``)
@@ -642,8 +528,8 @@ class PasswordsPage extends Page
                 
                 if (result.success)
                 {
-                    const index = this.items.indexOf(this.items.find(x => x.id == item.id))
-                    this.items[index] = data
+                    const index = PasswordsPage.items.indexOf(PasswordsPage.items.find(x => x.id == item.id))
+                    PasswordsPage.items[index] = data
                     await this.refresh()
                 }
             }
@@ -654,7 +540,7 @@ class PasswordsPage extends Page
                 if (result.success)
                 {
                     const item = result.data
-                    this.items.push(item)
+                    PasswordsPage.items.push(item)
                     this.selectedItemId = item.id
                     await this.refresh()
                 }
@@ -679,6 +565,8 @@ class PasswordsPage extends Page
         this.dialog.form.$save.off(`click`)
         this.dialog.form.$cancel.off(`click`)
     }
+    
+    
     
     #searching
     #nextSearchText
@@ -805,5 +693,157 @@ class PasswordsPage extends Page
         this.#searching = false
         
         App.endLock()
+    }
+    
+    
+    
+    async onClone()
+    {
+        let item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        item = JSON.parse(JSON.stringify(item))
+        item.id = 0
+        item.name += ` (Clone)`
+        await this.showDialog(item)
+    }
+    
+    onAutoType()
+    {
+        playButtonAnimation(this.$autoType)
+        
+        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        
+        const data = {
+            type: `AutoType`,
+            title: item.name,
+            text: [
+                item.username,
+                item.generatedPassword || item.password
+            ]
+        }
+        
+        location.href = `glut://${btoa(JSON.stringify(data))}`
+    }
+    
+    async onRelay(rules, type, loadAdditionalData, useWebCommandLine)
+    {
+        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        
+        let uri = item.uri
+        
+        if (!uri.includes(`://`))
+        {
+            uri = `http://${uri}`
+        }
+        
+        const index = rules.findIndex(x => uri.startsWith(`${x.scheme}://`))
+        
+        if (index != -1)
+        {
+            const rule = rules[index]
+            
+            const hostnameAndPort = uri.substr(rule.scheme.length + 3).split(`:`, 2)
+            
+            if (hostnameAndPort.length < 2)
+            {
+                hostnameAndPort.push(rule.defaultPort)
+            }
+            
+            const data = {
+                type: type,
+                hostname: hostnameAndPort[0],
+                port: +hostnameAndPort[1]
+            }
+            
+            if (loadAdditionalData)
+            {
+                loadAdditionalData(data, item)
+            }
+            
+            if (item.relayId)
+            {
+                const relay = (await PasswordsPage.getRelays()).find(x => x.id == item.relayId)
+                
+                if (relay)
+                {
+                    if (useWebCommandLine && relay.webCommandLine)
+                    {
+                        data.webCommandLine = relay.webCommandLine
+                    }
+                    else
+                    {
+                        data.relayHostname = relay.hostname
+                        data.relaySshPort = relay.sshPort
+                        data.relaySshUsername = relay.sshUsername
+                        data.relaySshPassword = relay.sshPassword
+                        data.relayMinPort = relay.minPort
+                        data.relayMaxPort = relay.maxPort
+                    }
+                }
+            }
+            
+            location.href = `glut://${btoa(JSON.stringify(data))}`
+        }
+    }
+    
+    async onRdp()
+    {
+        playButtonAnimation(this.$rdp)
+        
+        await this.onRelay([{ scheme: `rdp`, defaultPort: `3389` }], `Mstsc`, (data, item) => {
+            data.username = item.username
+            data.password = item.generatedPassword || item.password
+        })
+    }
+    
+    async onSsh()
+    {
+        playButtonAnimation(this.$ssh)
+        
+        await this.onRelay([{ scheme: `ssh`, defaultPort: `22` }], `Ssh`, (data, item) => {
+            data.username = item.username
+            data.password = item.generatedPassword || item.password
+        })
+    }
+    
+    async onWeb()
+    {
+        playButtonAnimation(this.$web)
+        
+        await this.onRelay([{ scheme: `http`, defaultPort: `80` }, { scheme: `https`, defaultPort: `443` }], `Web`, (data, item) => {
+            data.name = item.name,
+            data.uri = item.uri.includes(`://`) ? item.uri : `http://${item.uri}`
+        }, true)
+    }
+    
+    
+    
+    static async getItems()
+    {
+        if (PasswordsPage.items === undefined)
+        {
+            await PasswordsPage.loadItems()
+        }
+        
+        return GeneratorsPage.items
+    }
+    
+    static async getGenerators()
+    {
+        if (GeneratorsPage.items === undefined)
+        {
+            await GeneratorsPage.loadItems()
+        }
+        
+        return [ { id: 0, name: `None` }, ...GeneratorsPage.items ]
+    }
+    
+    static async getRelays()
+    {
+        if (RelaysPage.items === undefined)
+        {
+            await RelaysPage.loadItems()
+        }
+        
+        return [ { id: 0, hostname: `None` }, ...RelaysPage.items ]
     }
 }

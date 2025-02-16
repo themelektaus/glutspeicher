@@ -12,41 +12,46 @@ public static class ExtensionMethods
 
         app.MapGet("/api/database", Api.GetDatabse);
 
+        foreach (var route in new Dictionary<string, Delegate[]>() {
+            { "items", [
+                Api.Items.GetAll,
+                Api.Items.Get,
+                Api.Items.Post,
+                Api.Items.Put,
+                Api.Items.Delete
+            ] },
+            { "csvs", [
+                Api.Csvs.GetAll,
+                Api.Csvs.Get,
+                Api.Csvs.Post,
+                Api.Csvs.Put,
+                Api.Csvs.Delete
+            ] },
+            { "generators", [
+                Api.Generators.GetAll,
+                Api.Generators.Get,
+                Api.Generators.Post,
+                Api.Generators.Put,
+                Api.Generators.Delete
+            ] },
+            { "relays", [
+                Api.Relays.GetAll,
+                Api.Relays.Get,
+                Api.Relays.Post,
+                Api.Relays.Put,
+                Api.Relays.Delete
+            ] },
+        })
+        {
+            app.MapGet($"/api/{route.Key}", route.Value[0]);
 
+            app.MapGet($"/api/{route.Key}/{{id}}", route.Value[1]);
 
-        app.MapGet("/api/items", Api.Items.GetAll);
+            app.MapPost($"/api/{route.Key}", route.Value[2]);
 
-        app.MapGet("/api/items/{id}", Api.Items.Get);
+            app.MapPut($"/api/{route.Key}", route.Value[3]);
 
-        app.MapPost("/api/items", Api.Items.Post);
-
-        app.MapPut("/api/items", Api.Items.Put);
-
-        app.MapDelete("/api/items/{id}", Api.Items.Delete);
-
-
-
-        app.MapGet("/api/generators", Api.Generators.GetAll);
-
-        app.MapGet("/api/generators/{id}", Api.Generators.Get);
-
-        app.MapPost("/api/generators", Api.Generators.Post);
-
-        app.MapPut("/api/generators", Api.Generators.Put);
-
-        app.MapDelete("/api/generators/{id}", Api.Generators.Delete);
-
-
-
-
-        app.MapGet("/api/relays", Api.Relays.GetAll);
-
-        app.MapGet("/api/relays/{id}", Api.Relays.Get);
-
-        app.MapPost("/api/relays", Api.Relays.Post);
-
-        app.MapPut("/api/relays", Api.Relays.Put);
-
-        app.MapDelete("/api/relays/{id}", Api.Relays.Delete);
+            app.MapDelete($"/api/{route.Key}/{{id}}", route.Value[4]);
+        }
     }
 }

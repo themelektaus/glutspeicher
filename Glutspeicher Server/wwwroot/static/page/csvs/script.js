@@ -1,9 +1,9 @@
-class GeneratorsPage extends Page
+class CsvsPage extends Page
 {
     static _ = App.use({
         type: this,
         groupType: Page,
-        selector: `[data-page="generators"]`
+        selector: `[data-page="csvs"]`
     })
     
     init()
@@ -26,7 +26,8 @@ class GeneratorsPage extends Page
         
         this.$items = this.$content.query(`.items`)
         
-        this.$generateOfflineFile = this.$.query(`.generateOfflineFile`)
+        this.$loadCsv = this.$.query(`.loadCsv`)
+        this.$unloadCsv = this.$.query(`.unloadCsv`)
     }
     
     async lateInit()
@@ -68,12 +69,13 @@ class GeneratorsPage extends Page
         this.$edit.on(`click`, this.onEdit.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
         
-        this.$generateOfflineFile.on(`click`, this.onGenerateOfflineFile.bind(this))
+        this.$loadCsv.on(`click`, this.onLoadCsv.bind(this))
+        this.$unloadCsv.on(`click`, this.onUnloadCsv.bind(this))
     }
     
     async lateStart()
     {
-        if (GeneratorsPage.items === undefined)
+        if (CsvsPage.items === undefined)
         {
             await this.load()
         }
@@ -89,17 +91,18 @@ class GeneratorsPage extends Page
         this.$edit.off(`click`)
         this.$delete.off(`click`)
         
-        this.$generateOfflineFile.off(`click`)
+        this.$loadCsv.off(`click`)
+        this.$unloadCsv.off(`click`)
     }
     
     async load()
     {
         App.beginLock()
     
-        GeneratorsPage.items = []
+        CsvsPage.items = []
         this.refresh()
         
-        await GeneratorsPage.loadItems()
+        await CsvsPage.loadItems()
         this.refresh()
         
         App.endLock()
@@ -107,7 +110,7 @@ class GeneratorsPage extends Page
     
     static async loadItems()
     {
-        GeneratorsPage.items = (await fetchGet(`api/generators`)).data ?? []
+        CsvsPage.items = (await fetchGet(`api/csvs`)).data ?? []
     }
     
     async onAdd()
@@ -117,18 +120,18 @@ class GeneratorsPage extends Page
     
     async onEdit()
     {
-        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
+        const item = CsvsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
     }
     
     async onDelete()
     {
         const id = this.selectedItemId
-        const result = await fetchDelete(`api/generators/${id}`)
+        const result = await fetchDelete(`api/csvs/${id}`)
         
         if (result.success)
         {
-            GeneratorsPage.items.splice(GeneratorsPage.items.indexOf(GeneratorsPage.items.find(x => x.id == id)), 1)
+            CsvsPage.items.splice(CsvsPage.items.indexOf(CsvsPage.items.find(x => x.id == id)), 1)
             this.selectedItemId = 0
             this.refresh()
         }
@@ -138,7 +141,7 @@ class GeneratorsPage extends Page
     {
         let $items = [...this.$items.queryAll(`.item`)]
         
-        for (const item of GeneratorsPage.items)
+        for (const item of CsvsPage.items)
         {
             let $item = $items.find($ => $.dataset.id == item.id)
             
@@ -154,6 +157,7 @@ class GeneratorsPage extends Page
                     .setData(`id`, item.id)
                 
                 $item.create(`div`).setClass(`name`, true)
+                $item.create(`div`).setClass(`uri`, true)
                 
                 $item.addEventListener(`click`, () =>
                 {
@@ -163,6 +167,7 @@ class GeneratorsPage extends Page
             }
             
             $item.query(`.name`).setInnerHtml(item.name)
+            $item.query(`.uri`).setInnerHtml(item.uri)
         }
         
         for (const $item of $items)
@@ -178,21 +183,21 @@ class GeneratorsPage extends Page
         const $items = this.$items.queryAll(`.item`)
         $items.forEach($ => $.setClass(`selected`, $.getData(`id`) == this.selectedItemId))
         
-        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
+        const item = CsvsPage.items.find(x => x.id == this.selectedItemId)
         
         if (item)
         {
             this.$edit.setAttr(`disabled`, null)
             this.$delete.setAttr(`disabled`, null)
             
-            this.$generateOfflineFile.setAttr(`disabled`, null)
+            this.$loadCsv.setAttr(`disabled`, null)
         }
         else
         {
             this.$edit.setAttr(`disabled`, ``)
             this.$delete.setAttr(`disabled`, ``)
             
-            this.$generateOfflineFile.setAttr(`disabled`, ``)
+            this.$loadCsv.setAttr(`disabled`, ``)
         }
     }
     
@@ -229,24 +234,24 @@ class GeneratorsPage extends Page
             
             if (item.id)
             {
-                const result = await fetchPut(`api/generators`, data)
+                const result = await fetchPut(`api/csvs`, data)
                 
                 if (result.success)
                 {
-                    const index = GeneratorsPage.items.indexOf(GeneratorsPage.items.find(x => x.id == item.id))
+                    const index = CsvsPage.items.indexOf(CsvsPage.items.find(x => x.id == item.id))
                     
-                    GeneratorsPage.items[index] = data
+                    CsvsPage.items[index] = data
                     this.refresh()
                 }
             }
             else
             {
-                const result = await fetchPost(`api/generators`, data)
+                const result = await fetchPost(`api/csvs`, data)
                 
                 if (result.success)
                 {
                     const item = result.data
-                    GeneratorsPage.items.push(item)
+                    CsvsPage.items.push(item)
                     
                     this.selectedItemId = item.id
                     this.refresh()
@@ -275,111 +280,48 @@ class GeneratorsPage extends Page
     
     
     
-    async onGenerateOfflineFile()
+    async onLoadCsv()
     {
-        playButtonAnimation(this.$generateOfflineFile)
+        playButtonAnimation(this.$loadCsv)
         
-        const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
+        const csvItem = CsvsPage.items.find(x => x.id == this.selectedItemId)
         
-        const $head = create(`head`)
+        const response = await fetch(csvItem.uri)
+        const text = await response.text()
         
-        $head.appendChild(create(`title`).setInnerHtml(`Password Recovery File`))
-        $head.appendChild(create(`style`).setInnerHtml(`
-            
-            html, body {
-                min-height: 100vh;
-            }
-            
-            body {
-                margin: 0;
-                background-color: #111;
-                display: flex;
-            }
-            
-            body, input {
-                font-size: 1em;
-                color: white;
-            }
-            
-            div {
-                max-width: 30em;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: .5em;
-                padding: .5em;
-                margin: auto;
-            }
-            
-            input {
-                padding: .5em;
-                outline: none;
-                background-color: #333;
-                border: none;
-                width: 100%;
-            }
-                
-            #password {
-                font-family: monospace;
-                font-size: 1.25em;
-            }
-            
-        `))
+        const rows = Papa.parse(text, { header: true })
         
-        const $body = create(`body`)
+        const items = []
         
-        const $div = $body.create(`div`)
-        
-        for (const question of (item.questions ?? ``).split(`\r`).map(x => x.split(`\n`)).flat())
+        for (const row of rows.data)
         {
-            if (question.trim())
-            {
-                $div.create(`input`).setAttr(`placeholder`, question).setAttr(
-                    `type`,
-                    (
-                        question.toLowerCase() == `passwort` ||
-                        question.toLowerCase() == `password` ||
-                        question.includes(`PIN`)
-                    ) ? `password` : `text`
-                )
-            }
+            const item = eval(`(function(row) { ${csvItem.script} })(${JSON.stringify(row)})`)
+            
+            items.push({
+                id: -items.length - 1,
+                name: item.name ?? ``,
+                uri: item.uri ?? ``,
+                username: item.username ?? ``,
+                password: item.password ?? ``,
+                generatorId: item.generatorId ?? 0,
+                generatedPassword: item.generatedPassword ?? null,
+                description: item.description ?? null,
+                totp: item.totp ?? null,
+                source: item.source ?? ``,
+                section: item.section ?? ``,
+                relayId: item.relayId ?? 0
+            })
         }
         
-        $div.create(`input`).setAttr(`placeholder`, `Domain`)
-        $div.create(`input`).setAttr(`placeholder`, `Username`)
-        $div.create(`input`).setAttr(`id`, `password`).setAttr(`readonly`, ``)
-        
-        const scriptResponse = await fetch(`static/password-generator.js`)
-        const scriptText = await scriptResponse.text()
-        
-        const script = `<script>${scriptText}
-const $inputs = [...document.querySelectorAll("input:not([readonly])")]
-$inputs.forEach($ =>
-{
-    const onInput = () =>
-    {
-        let answers = ""
-        
-        for (const $input of $inputs)
-        {
-            answers += $input.value
-        }
-        
-        document.querySelector('#password').value = generatePassword(${item.length}, answers)
+        PasswordsPage.items = items
+        PasswordsPage.refreshNextTime = true
     }
-    $.addEventListener("input", onInput)
-    onInput()
-})</script>`
+    
+    async onUnloadCsv()
+    {
+        playButtonAnimation(this.$unloadCsv)
         
-        const html = `<!doctype html><head>${$head.innerHTML}</head><body>${$body.innerHTML}${script}</body></html>`
-        
-        var $a = create(`a`)
-            .setAttr(`href`, `data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
-            .setAttr(`download`, `${item.name}.html`)
-            .setStyle(`display`, `none`)
-        document.body.appendChild($a)
-        $a.click()
-        document.body.removeChild($a)
+        PasswordsPage.items = null
+        PasswordsPage.refreshNextTime = true
     }
 }

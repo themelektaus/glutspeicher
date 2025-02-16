@@ -35,53 +35,59 @@ public class FrontendMiddleware(RequestDelegate next)
                 var isCSS = path.EndsWith(".css");
                 var isSCSS = path.EndsWith(".scss");
                 var isJS = path.EndsWith(".js");
+                var isCSV = path.EndsWith(".csv");
 
-                if (isHTML || isCSS || isSCSS || isJS)
+                if (isHTML || isCSS || isSCSS || isJS || isCSV)
                 {
-                    var content = Regex.Replace(
-                        await File.ReadAllTextAsync(
-                            GetWwwRootPath(path)
-                        ),
-                        isHTML
-                            ? @"\<\!\-\- include (.*) \-\-\>"
-                            : (
-                                isCSS
-                                    ? @"\/\* include (.*) \*\/"
-                                    : @"\/\/ include (.*)"
-                            ),
-                        x =>
-                        {
-                            var basePath = GetWwwRootPath(
-                                Path.GetDirectoryName(path.TrimStart('/'))
-                            );
-
-                            IEnumerable<string> files;
-
-                            var includePath = x.Groups[1].Value.Trim();
-
-                            if (includePath.Contains('*'))
-                            {
-                                var includePathParts = includePath.Split('*');
-
-                                files = Directory.EnumerateFiles(
-                                    Path.Combine(basePath, includePathParts[0]),
-                                    "*.*",
-                                    SearchOption.AllDirectories
-                                ).Where(x => x.EndsWith(includePathParts[1]));
-
-                            }
-                            else
-                            {
-                                files = [Path.Combine(basePath, includePath)];
-                            }
-
-                            return string.Join(
-                                Environment.NewLine,
-                                files.Select(File.ReadAllText)
-                            );
-                        },
-                        RegexOptions.Multiline
+                    var content = await File.ReadAllTextAsync(
+                        GetWwwRootPath(path)
                     );
+
+                    if (!isCSV)
+                    {
+                        content = Regex.Replace(
+                            content,
+                            isHTML
+                                ? @"\<\!\-\- include (.*) \-\-\>"
+                                : (
+                                    isCSS
+                                        ? @"\/\* include (.*) \*\/"
+                                        : @"\/\/ include (.*)"
+                                ),
+                            x =>
+                            {
+                                var basePath = GetWwwRootPath(
+                                    Path.GetDirectoryName(path.TrimStart('/'))
+                                );
+
+                                IEnumerable<string> files;
+
+                                var includePath = x.Groups[1].Value.Trim();
+
+                                if (includePath.Contains('*'))
+                                {
+                                    var includePathParts = includePath.Split('*');
+
+                                    files = Directory.EnumerateFiles(
+                                        Path.Combine(basePath, includePathParts[0]),
+                                        "*.*",
+                                        SearchOption.AllDirectories
+                                    ).Where(x => x.EndsWith(includePathParts[1]));
+
+                                }
+                                else
+                                {
+                                    files = [Path.Combine(basePath, includePath)];
+                                }
+
+                                return string.Join(
+                                    Environment.NewLine,
+                                    files.Select(File.ReadAllText)
+                                );
+                            },
+                            RegexOptions.Multiline
+                        );
+                    }
 
                     if (isSCSS)
                     {
@@ -107,9 +113,14 @@ public class FrontendMiddleware(RequestDelegate next)
 #endif
                         content = $"SERVER_VERSION=`{ServerVersion}`;AGENT_VERSION=`{AgentVersion}`;{content}";
                     }
+                    else if (isCSV)
+                    {
+                        context.Response.ContentType = "text/plain; charset=utf-8";
+                    }
 
-                    var data = Encoding.UTF8.GetBytes(content);
-
+                    byte[] data;
+                    data = Encoding.UTF8.GetBytes(content);
+                    
                     using var stream = new MemoryStream(data);
                     await stream.CopyToAsync(context.Response.Body);
 
@@ -147,7 +158,7 @@ public class FrontendMiddleware(RequestDelegate next)
         return Path.Combine(
             "wwwroot",
             Path.Combine(
-                path.TrimStart('/').Split('/')
+                Uri.UnescapeDataString(path).TrimStart('/').Split('/')
             )
         );
     }
