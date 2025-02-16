@@ -9,3 +9,5 @@
 /Glutspeicher */**/*.user
 
 /Glutspeicher Agent/Deploy.targets
+
+/Glutspeicher Server/wwwroot/static/csv/
