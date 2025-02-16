@@ -1,4 +1,4 @@
-[data-page="csvs"] {
+[data-page="exports"] {
     
     .toolbar {
         margin-block-end: 1em;
@@ -44,7 +44,7 @@
     }
 }
 
-:has([data-page="csvs"]) {
+:has([data-page="exports"]) {
     
     x-dialog {
         

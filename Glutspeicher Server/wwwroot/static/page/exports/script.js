@@ -1,9 +1,9 @@
-class CsvsPage extends Page
+class ExportsPage extends Page
 {
     static _ = App.use({
         type: this,
         groupType: Page,
-        selector: `[data-page="csvs"]`
+        selector: `[data-page="exports"]`
     })
     
     init()
@@ -12,6 +12,7 @@ class CsvsPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
+        this.$export = this.$.query(`.export`)
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
@@ -26,8 +27,7 @@ class CsvsPage extends Page
         
         this.$items = this.$content.query(`.items`)
         
-        this.$loadCsv = this.$.query(`.loadCsv`)
-        this.$unloadCsv = this.$.query(`.unloadCsv`)
+        this.$loadExport = this.$.query(`.loadExport`)
     }
     
     async lateInit()
@@ -67,15 +67,15 @@ class CsvsPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$export.on(`click`, this.onExport.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
         
-        this.$loadCsv.on(`click`, this.onLoadCsv.bind(this))
-        this.$unloadCsv.on(`click`, this.onUnloadCsv.bind(this))
+        this.$loadExport.on(`click`, this.onLoadExport.bind(this))
     }
     
     async lateStart()
     {
-        if (CsvsPage.items === undefined)
+        if (ExportsPage.items === undefined)
         {
             await this.load()
         }
@@ -89,20 +89,20 @@ class CsvsPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$export.off(`click`)
         this.$delete.off(`click`)
         
-        this.$loadCsv.off(`click`)
-        this.$unloadCsv.off(`click`)
+        this.$loadExport.off(`click`)
     }
     
     async load()
     {
         App.beginLock()
     
-        CsvsPage.items = []
+        ExportsPage.items = []
         this.refresh()
         
-        await CsvsPage.loadItems()
+        await ExportsPage.loadItems()
         this.refresh()
         
         App.endLock()
@@ -110,7 +110,7 @@ class CsvsPage extends Page
     
     static async loadItems()
     {
-        CsvsPage.items = (await fetchGet(`api/csvs`)).data ?? []
+        ExportsPage.items = (await fetchGet(`api/exports`)).data ?? []
     }
     
     async onAdd()
@@ -120,18 +120,25 @@ class CsvsPage extends Page
     
     async onEdit()
     {
-        const item = CsvsPage.items.find(x => x.id == this.selectedItemId)
+        const item = ExportsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
+    }
+    
+    onExport()
+    {
+        playButtonAnimation(this.$export)
+        
+        location.href = `api/exports/export`
     }
     
     async onDelete()
     {
         const id = this.selectedItemId
-        const result = await fetchDelete(`api/csvs/${id}`)
+        const result = await fetchDelete(`api/exports/${id}`)
         
         if (result.success)
         {
-            CsvsPage.items.splice(CsvsPage.items.indexOf(CsvsPage.items.find(x => x.id == id)), 1)
+            ExportsPage.items.splice(ExportsPage.items.indexOf(ExportsPage.items.find(x => x.id == id)), 1)
             this.selectedItemId = 0
             this.refresh()
         }
@@ -141,7 +148,7 @@ class CsvsPage extends Page
     {
         let $items = [...this.$items.queryAll(`.item`)]
         
-        for (const item of CsvsPage.items)
+        for (const item of ExportsPage.items)
         {
             let $item = $items.find($ => $.dataset.id == item.id)
             
@@ -183,21 +190,21 @@ class CsvsPage extends Page
         const $items = this.$items.queryAll(`.item`)
         $items.forEach($ => $.setClass(`selected`, $.getData(`id`) == this.selectedItemId))
         
-        const item = CsvsPage.items.find(x => x.id == this.selectedItemId)
+        const item = ExportsPage.items.find(x => x.id == this.selectedItemId)
         
         if (item)
         {
             this.$edit.setAttr(`disabled`, null)
             this.$delete.setAttr(`disabled`, null)
             
-            this.$loadCsv.setAttr(`disabled`, null)
+            this.$loadExport.setAttr(`disabled`, null)
         }
         else
         {
             this.$edit.setAttr(`disabled`, ``)
             this.$delete.setAttr(`disabled`, ``)
             
-            this.$loadCsv.setAttr(`disabled`, ``)
+            this.$loadExport.setAttr(`disabled`, ``)
         }
     }
     
@@ -234,24 +241,24 @@ class CsvsPage extends Page
             
             if (item.id)
             {
-                const result = await fetchPut(`api/csvs`, data)
+                const result = await fetchPut(`api/exports`, data)
                 
                 if (result.success)
                 {
-                    const index = CsvsPage.items.indexOf(CsvsPage.items.find(x => x.id == item.id))
+                    const index = ExportsPage.items.indexOf(ExportsPage.items.find(x => x.id == item.id))
                     
-                    CsvsPage.items[index] = data
+                    ExportsPage.items[index] = data
                     this.refresh()
                 }
             }
             else
             {
-                const result = await fetchPost(`api/csvs`, data)
+                const result = await fetchPost(`api/exports`, data)
                 
                 if (result.success)
                 {
                     const item = result.data
-                    CsvsPage.items.push(item)
+                    ExportsPage.items.push(item)
                     
                     this.selectedItemId = item.id
                     this.refresh()
@@ -280,13 +287,17 @@ class CsvsPage extends Page
     
     
     
-    async onLoadCsv()
+    async onLoadExport()
     {
-        playButtonAnimation(this.$loadCsv)
+        const exportItem = ExportsPage.items.find(x => x.id == this.selectedItemId)
         
-        const csvItem = CsvsPage.items.find(x => x.id == this.selectedItemId)
+        const response = await fetch(exportItem.uri)
         
-        const response = await fetch(csvItem.uri)
+        if (!response.ok)
+        {
+            return
+        }
+        
         const text = await response.text()
         
         const rows = Papa.parse(text, { header: true })
@@ -295,7 +306,28 @@ class CsvsPage extends Page
         
         for (const row of rows.data)
         {
-            const item = eval(`(function(row) { ${csvItem.script} })(${JSON.stringify(row)})`)
+            let item
+            
+            if (exportItem.script)
+            {
+                item = eval(`(function(row) { ${exportItem.script} })(${JSON.stringify(row)})`)
+            }
+            else
+            {
+                item = {
+                    name: row.Name,
+                    uri: row.Uri,
+                    username: row.Username,
+                    password: row.Password,
+                    generatorId: +row.GeneratorId,
+                    generatedPassword: row.GeneratedPassword,
+                    description: row.Description,
+                    totp: row.Totp,
+                    source: row.Source,
+                    section: row.Section,
+                    relayId: +row.RelayId
+                }
+            }
             
             items.push({
                 id: -items.length - 1,
@@ -314,14 +346,9 @@ class CsvsPage extends Page
         }
         
         PasswordsPage.items = items
+        PasswordsPage.isExport = true
         PasswordsPage.refreshNextTime = true
-    }
-    
-    async onUnloadCsv()
-    {
-        playButtonAnimation(this.$unloadCsv)
         
-        PasswordsPage.items = null
-        PasswordsPage.refreshNextTime = true
+        Page.getByName(`passwords`).activate()
     }
 }

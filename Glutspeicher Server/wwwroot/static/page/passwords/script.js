@@ -12,6 +12,7 @@ class PasswordsPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
+        this.$export = this.$.query(`.export`)
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
@@ -31,6 +32,8 @@ class PasswordsPage extends Page
         this.$rdp = this.$.query(`.rdp`)
         this.$ssh = this.$.query(`.ssh`)
         this.$web = this.$.query(`.web`)
+        
+        this.$unloadExport = this.$.query(`.unloadExport`)
         
         this.$search = this.$.query(`.search`)
         this.$searchInput = this.$search.query(`input`)
@@ -224,6 +227,7 @@ class PasswordsPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$export.on(`click`, this.onExport.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
         
         this.$clone.on(`click`, this.onClone.bind(this))
@@ -231,6 +235,8 @@ class PasswordsPage extends Page
         this.$rdp.on(`click`, this.onRdp.bind(this))
         this.$ssh.on(`click`, this.onSsh.bind(this))
         this.$web.on(`click`, this.onWeb.bind(this))
+        
+        this.$unloadExport.on(`click`, this.onUnloadExport.bind(this))
         
         this.$search.on(`input`, async () =>
         {
@@ -281,6 +287,7 @@ class PasswordsPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$export.off(`click`)
         this.$delete.off(`click`)
         
         this.$clone.off(`click`)
@@ -288,12 +295,15 @@ class PasswordsPage extends Page
         this.$rdp.off(`click`)
         this.$web.off(`click`)
         
+        this.$unloadExport.off(`click`)
+        
         this.$search.off(`input`)
     }
     
     static async loadItems()
     {
-        PasswordsPage.items = (await fetchGet(`api/items`)).data ?? []
+        PasswordsPage.isExport = false
+        PasswordsPage.items = (await fetchGet(`api/passwords`)).data ?? []
     }
     
     async onAdd()
@@ -306,11 +316,20 @@ class PasswordsPage extends Page
         const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
     }
+
+    onExport()
+    {
+        playButtonAnimation(this.$export)
+        
+        location.href = `api/passwords/export`
+    }
     
     async onDelete()
     {
         const id = this.selectedItemId
-        const result = await fetchDelete(`api/items/${id}`)
+        const result = PasswordsPage.isExport
+            ? { success: true }
+            : (await fetchDelete(`api/passwords/${id}`))
         
         if (result.success)
         {
@@ -456,7 +475,11 @@ class PasswordsPage extends Page
     refreshSelection()
     {
         const $items = this.$items.queryAll(`.item`)
-        $items.forEach($ => $.setClass(`selected`, $.getData(`id`) == this.selectedItemId))
+        $items.forEach($ =>
+        {
+            const id = $.getData(`id`)
+            $.setClass(`selected`, id == this.selectedItemId)
+        })
         
         const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
         
@@ -464,8 +487,8 @@ class PasswordsPage extends Page
         {
             const uri = item.uri ?? ``
             
-            this.$edit.setAttr(`disabled`, item.id > 0 ? null : ``)
-            this.$delete.setAttr(`disabled`, item.id > 0 ? null : ``)
+            this.$edit.setAttr(`disabled`, null)
+            this.$delete.setAttr(`disabled`, null)
             
             this.$clone.setAttr(`disabled`, null)
             this.$autoType.setAttr(`disabled`, null)
@@ -484,10 +507,18 @@ class PasswordsPage extends Page
             this.$ssh.setAttr(`disabled`, ``)
             this.$web.setAttr(`disabled`, ``)
         }
+        
+        this.$unloadExport.setClass(`hidden`, !PasswordsPage.isExport)
+        this.$export.setAttr(`disabled`, PasswordsPage.isExport ? `` : null)
     }
     
     async showDialog(item)
     {
+        if (App.isLocked)
+        {
+            return
+        }
+        
         item ??= { }
         
         const form = this.dialog.form
@@ -507,6 +538,8 @@ class PasswordsPage extends Page
         await form.refreshGeneratedPassword()
         await this.dialog.show()
         
+        let needsRefresh = false
+        
         form.$save.on(`click`, async () =>
         {
             if (this.dialog.busy)
@@ -524,25 +557,27 @@ class PasswordsPage extends Page
             
             if (item.id)
             {
-                const result = await fetchPut(`api/items`, data)
+                const result = PasswordsPage.isExport
+                    ? { success: true }
+                    : (await fetchPut(`api/passwords`, data))
                 
                 if (result.success)
                 {
                     const index = PasswordsPage.items.indexOf(PasswordsPage.items.find(x => x.id == item.id))
                     PasswordsPage.items[index] = data
-                    await this.refresh()
+                    needsRefresh = true
                 }
             }
             else
             {
-                const result = await fetchPost(`api/items`, data)
+                const result = await fetchPost(`api/passwords`, data)
                 
                 if (result.success)
                 {
                     const item = result.data
                     PasswordsPage.items.push(item)
                     this.selectedItemId = item.id
-                    await this.refresh()
+                    needsRefresh = true
                 }
             }
             
@@ -561,6 +596,11 @@ class PasswordsPage extends Page
         })
         
         await this.dialog.wait()
+        
+        if (needsRefresh)
+        {
+            await this.refresh()
+        }
         
         this.dialog.form.$save.off(`click`)
         this.dialog.form.$cancel.off(`click`)
@@ -817,15 +857,19 @@ class PasswordsPage extends Page
     
     
     
-    static async getItems()
+    onUnloadExport()
     {
-        if (PasswordsPage.items === undefined)
+        App.lock(() =>
         {
-            await PasswordsPage.loadItems()
-        }
-        
-        return GeneratorsPage.items
+            PasswordsPage.items = null
+            PasswordsPage.isExport = false
+            PasswordsPage.refreshNextTime = true
+            
+            Page.getByName(`exports`).activate()
+        })
     }
+    
+    
     
     static async getGenerators()
     {

@@ -12,6 +12,7 @@ class GeneratorsPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
+        this.$export = this.$.query(`.export`)
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
@@ -66,6 +67,7 @@ class GeneratorsPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$export.on(`click`, this.onExport.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
         
         this.$generateOfflineFile.on(`click`, this.onGenerateOfflineFile.bind(this))
@@ -87,6 +89,7 @@ class GeneratorsPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$export.off(`click`)
         this.$delete.off(`click`)
         
         this.$generateOfflineFile.off(`click`)
@@ -119,6 +122,13 @@ class GeneratorsPage extends Page
     {
         const item = GeneratorsPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
+    }
+    
+    onExport()
+    {
+        playButtonAnimation(this.$export)
+        
+        location.href = `api/generators/export`
     }
     
     async onDelete()

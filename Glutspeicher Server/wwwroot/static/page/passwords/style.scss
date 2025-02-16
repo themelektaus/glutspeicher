@@ -8,6 +8,10 @@
         margin-block-end: 1em;
         display: flex;
         gap: .5em;
+        
+        button.hidden {
+            display: none;
+        }
     }
     
     .search {

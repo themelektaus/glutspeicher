@@ -24,6 +24,13 @@ public class FrontendMiddleware(RequestDelegate next)
             {
                 path = "/index.html";
             }
+            else if (!path.TrimStart('/').Contains('/'))
+            {
+                if (path.EndsWith(".csv"))
+                {
+                    path = $"/static/exports{path}";
+                }
+            }
 
             if (
                 path == "/index.html" ||
@@ -118,8 +125,7 @@ public class FrontendMiddleware(RequestDelegate next)
                         context.Response.ContentType = "text/plain; charset=utf-8";
                     }
 
-                    byte[] data;
-                    data = Encoding.UTF8.GetBytes(content);
+                    var data = Encoding.UTF8.GetBytes(content);
                     
                     using var stream = new MemoryStream(data);
                     await stream.CopyToAsync(context.Response.Body);

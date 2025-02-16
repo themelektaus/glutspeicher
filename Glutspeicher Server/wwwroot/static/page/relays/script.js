@@ -12,6 +12,7 @@ class RelaysPage extends Page
         
         this.$add = this.$.query(`.add`)
         this.$edit = this.$.query(`.edit`)
+        this.$export = this.$.query(`.export`)
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
@@ -64,6 +65,7 @@ class RelaysPage extends Page
     {
         this.$add.on(`click`, this.onAdd.bind(this))
         this.$edit.on(`click`, this.onEdit.bind(this))
+        this.$export.on(`click`, this.onExport.bind(this))
         this.$delete.on(`click`, this.onDelete.bind(this))
     }
     
@@ -83,6 +85,7 @@ class RelaysPage extends Page
     {
         this.$add.off(`click`)
         this.$edit.off(`click`)
+        this.$export.off(`click`)
         this.$delete.off(`click`)
     }
     
@@ -113,6 +116,13 @@ class RelaysPage extends Page
     {
         const item = RelaysPage.items.find(x => x.id == this.selectedItemId)
         await this.showDialog(item)
+    }
+    
+    onExport()
+    {
+        playButtonAnimation(this.$export)
+        
+        location.href = `api/relays/export`
     }
     
     async onDelete()

@@ -1,14 +1,15 @@
-<div data-page="csvs">
+<div data-page="exports">
     <h1>
-        CSVs
+        Exports
     </h1>
     <div class="toolbar">
         <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
+        <button class="with-text" disabled style="background-image: none; color: transparent; ">Clone</button>
+        <button class="action loadExport with-text positive" disabled style="background-image: url(static/res/play.svg); ">Load</button>
         <div style="flex: 1; "></div>
         <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
-        <button class="action loadCsv with-text" disabled style="background-image: url(static/res/play.svg); ">Load</button>
-        <button class="action unloadCsv with-text" style="background-image: url(static/res/play.svg); ">Unload</button>
         <div style="flex: 3; "></div>
+        <button class="action export with-text" style="background-image: url(static/res/download.svg); ">Export</button>
         <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
     </div>
     <div class="content scrollable">

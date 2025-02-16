@@ -1,6 +1,9 @@
-﻿namespace Glutspeicher.Server.Model;
+﻿using Csv.Annotations;
 
-public class Generator
+namespace Glutspeicher.Server.Model;
+
+[CsvObject(keyAsPropertyName: true)]
+public partial class Generator
 {
     public long Id { get; set; }
 

@@ -1,4 +1,4 @@
-button.action:active {
+button.action:not([disabled]):active {
     background-color: $bg-active !important;
 }
 

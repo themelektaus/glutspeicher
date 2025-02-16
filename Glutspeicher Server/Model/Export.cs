@@ -1,6 +1,9 @@
-﻿namespace Glutspeicher.Server.Model;
+﻿using Csv.Annotations;
 
-public class Csv
+namespace Glutspeicher.Server.Model;
+
+[CsvObject(keyAsPropertyName: true)]
+public partial class Export
 {
     public long Id { get; set; }
 

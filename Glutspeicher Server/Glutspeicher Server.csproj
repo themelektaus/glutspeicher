@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <CompressionEnabled>false</CompressionEnabled>
+        <Version>0.4.9</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="CsvCSharp" Version="0.1.6" />
         <PackageReference Include="LiteDB" Version="5.0.21" />
         <PackageReference Include="LibSassHost" Version="1.5.0" />
         <PackageReference Include="LibSassHost.Native.linux-x64" Version="1.5.0" />

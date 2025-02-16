@@ -19,6 +19,16 @@ public static partial class Api
             );
         }
 
+        public static IResult Export(LiteDbContext liteDbContext)
+        {
+            var data = Collection(liteDbContext).FindAll().ToList();
+            return Results.File(
+                ToCsv(data),
+                "application/octet-stream",
+                $"{nameof(Glutspeicher)} {nameof(Generators)} {Now:yyyy-MM-dd HH-mm-ss}.csv"
+            );
+        }
+
         public static IApiResult Get(LiteDbContext liteDbContext, long id)
         {
             return ApiResult.OkIfNotNull(

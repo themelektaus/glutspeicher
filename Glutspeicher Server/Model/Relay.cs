@@ -1,6 +1,9 @@
-﻿namespace Glutspeicher.Server.Model;
+﻿using Csv.Annotations;
 
-public class Relay
+namespace Glutspeicher.Server.Model;
+
+[CsvObject(keyAsPropertyName: true)]
+public partial class Relay
 {
     public long Id { get; set; }
 

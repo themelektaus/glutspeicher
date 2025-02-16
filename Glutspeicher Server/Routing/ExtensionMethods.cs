@@ -10,25 +10,30 @@ public static class ExtensionMethods
     {
         app.MapGet("/api", Api.Get);
 
-        app.MapGet("/api/database", Api.GetDatabse);
+        app.MapGet("/api/database", Api.DownloadDatabase);
+
+        app.MapGet("/api/database/rebuild", Api.RebuildDatabase);
 
         foreach (var route in new Dictionary<string, Delegate[]>() {
-            { "items", [
-                Api.Items.GetAll,
-                Api.Items.Get,
-                Api.Items.Post,
-                Api.Items.Put,
-                Api.Items.Delete
+            { "passwords", [
+                Api.Passwords.GetAll,
+                Api.Passwords.Export,
+                Api.Passwords.Get,
+                Api.Passwords.Post,
+                Api.Passwords.Put,
+                Api.Passwords.Delete
             ] },
-            { "csvs", [
-                Api.Csvs.GetAll,
-                Api.Csvs.Get,
-                Api.Csvs.Post,
-                Api.Csvs.Put,
-                Api.Csvs.Delete
+            { "exports", [
+                Api.Exports.GetAll,
+                Api.Exports.Export,
+                Api.Exports.Get,
+                Api.Exports.Post,
+                Api.Exports.Put,
+                Api.Exports.Delete
             ] },
             { "generators", [
                 Api.Generators.GetAll,
+                Api.Generators.Export,
                 Api.Generators.Get,
                 Api.Generators.Post,
                 Api.Generators.Put,
@@ -36,6 +41,7 @@ public static class ExtensionMethods
             ] },
             { "relays", [
                 Api.Relays.GetAll,
+                Api.Relays.Export,
                 Api.Relays.Get,
                 Api.Relays.Post,
                 Api.Relays.Put,
@@ -45,13 +51,15 @@ public static class ExtensionMethods
         {
             app.MapGet($"/api/{route.Key}", route.Value[0]);
 
-            app.MapGet($"/api/{route.Key}/{{id}}", route.Value[1]);
+            app.MapGet($"/api/{route.Key}/export", route.Value[1]);
 
-            app.MapPost($"/api/{route.Key}", route.Value[2]);
+            app.MapGet($"/api/{route.Key}/{{id}}", route.Value[2]);
 
-            app.MapPut($"/api/{route.Key}", route.Value[3]);
+            app.MapPost($"/api/{route.Key}", route.Value[3]);
 
-            app.MapDelete($"/api/{route.Key}/{{id}}", route.Value[4]);
+            app.MapPut($"/api/{route.Key}", route.Value[4]);
+
+            app.MapDelete($"/api/{route.Key}/{{id}}", route.Value[5]);
         }
     }
 }

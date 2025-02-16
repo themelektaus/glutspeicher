@@ -1,6 +1,10 @@
-﻿namespace Glutspeicher.Server.Model;
+﻿using Csv.Annotations;
+using LiteDB;
 
-public class Item
+namespace Glutspeicher.Server.Model;
+
+[CsvObject(keyAsPropertyName: true)]
+public partial class Password
 {
     public long Id { get; set; }
 
@@ -10,7 +14,9 @@ public class Item
 
     public string Username { get; set; }
 
-    public string Password { get; set; }
+    [BsonField(nameof(Password))]
+    [JsonPropertyName("password")]
+    public string StaticPassword { get; set; }
 
     public long GeneratorId { get; set; }
 
