@@ -10,7 +10,7 @@ public class Register
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.EnableVisualStyles();
 
-        var dialog = new Dialog { Text = $"{nameof(Glutspeicher)} {nameof(Glutspeicher.Agent)}" };
+        var dialog = new Dialog { Text = $"{nameof(Glutspeicher)} {nameof(Agent)}" };
 
         dialog.AddButton($"Register", 100, Color.DarkGreen).Click += (sender, e) =>
         {

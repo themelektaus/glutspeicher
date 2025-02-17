@@ -28,6 +28,7 @@ class ExportsPage extends Page
         this.$items = this.$content.query(`.items`)
         
         this.$loadExport = this.$.query(`.loadExport`)
+        this.$loadAllExports = this.$.query(`.loadAllExports`)
     }
     
     async lateInit()
@@ -71,6 +72,7 @@ class ExportsPage extends Page
         this.$delete.on(`click`, this.onDelete.bind(this))
         
         this.$loadExport.on(`click`, this.onLoadExport.bind(this))
+        this.$loadAllExports.on(`click`, this.onLoadAllExports.bind(this))
     }
     
     async lateStart()
@@ -93,6 +95,7 @@ class ExportsPage extends Page
         this.$delete.off(`click`)
         
         this.$loadExport.off(`click`)
+        this.$loadAllExports.off(`click`)
     }
     
     async load()
@@ -289,13 +292,41 @@ class ExportsPage extends Page
     
     async onLoadExport()
     {
-        const exportItem = ExportsPage.items.find(x => x.id == this.selectedItemId)
+        const items = await this.loadExport(this.selectedItemId)
+        
+        PasswordsPage.items = items
+        PasswordsPage.isExport = true
+        PasswordsPage.refreshNextTime = true
+        
+        Page.getByName(`passwords`).activate()
+    }
+    
+    async onLoadAllExports()
+    {
+        const allItems = []
+        
+        for (const id of ExportsPage.items.map(x => x.id))
+        {
+            const items = await this.loadExport(id)
+            allItems.push(...items)
+        }
+        
+        PasswordsPage.items = allItems
+        PasswordsPage.isExport = true
+        PasswordsPage.refreshNextTime = true
+        
+        Page.getByName(`passwords`).activate()
+    }
+    
+    async loadExport(id)
+    {
+        const exportItem = ExportsPage.items.find(x => x.id == id)
         
         const response = await fetch(exportItem.uri)
         
         if (!response.ok)
         {
-            return
+            return []
         }
         
         const text = await response.text()
@@ -311,13 +342,13 @@ class ExportsPage extends Page
                 uri: row.Uri ?? ``,
                 username: row.Username ?? ``,
                 password: row.Password ?? ``,
-                generatorId: +row.GeneratorId ?? 0,
+                generatorId: +(row.GeneratorId || 0),
                 generatedPassword: row.GeneratedPassword ?? null,
                 description: row.Description ?? null,
                 totp: row.Totp ?? null,
                 source: row.Source ?? ``,
                 section: row.Section ?? ``,
-                relayId: +row.RelayId ?? 0
+                relayId: +(row.RelayId || 0)
             }
             
             if (exportItem.script)
@@ -341,20 +372,16 @@ class ExportsPage extends Page
                 uri: item.uri ?? ``,
                 username: item.username ?? ``,
                 password: item.password ?? ``,
-                generatorId: item.generatorId ?? 0,
+                generatorId: +(item.generatorId || 0),
                 generatedPassword: item.generatedPassword ?? null,
                 description: item.description ?? null,
                 totp: item.totp ?? null,
                 source: item.source ?? ``,
                 section: item.section ?? ``,
-                relayId: item.relayId ?? 0
+                relayId: +(item.relayId || 0)
             })
         }
         
-        PasswordsPage.items = items
-        PasswordsPage.isExport = true
-        PasswordsPage.refreshNextTime = true
-        
-        Page.getByName(`passwords`).activate()
+        return items
     }
 }

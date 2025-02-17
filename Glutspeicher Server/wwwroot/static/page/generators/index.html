@@ -3,13 +3,17 @@
         Generators
     </h1>
     <div class="toolbar">
-        <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
-        <div style="flex: 1; "></div>
-        <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
-        <button class="action generateOfflineFile with-text" disabled style="background-image: url(static/res/download.svg); ">Generate Offline File</button>
-        <div style="flex: 3; "></div>
-        <button class="action export with-text" style="background-image: url(static/res/download.svg); ">Export</button>
-        <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+        <div style="flex: 1; ">
+            <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
+        </div>
+        <div style="flex: 2; ">
+            <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
+            <button class="action generateOfflineFile with-text" disabled style="background-image: url(static/res/download.svg); ">Generate Offline File</button>
+        </div>
+        <div style="flex: 1; justify-content: flex-end; ">
+            <button class="action export with-text" style="background-image: url(static/res/download.svg); ">Export</button>
+            <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+        </div>
     </div>
     <div class="content scrollable">
         <div class="items"></div>

@@ -256,6 +256,8 @@ class PasswordsPage extends Page
             {
                 App.beginLock()
                 
+                this.noLimit = false
+                
                 this.$.query(`.loading`).setStyle(`display`, null)
                 
                 const items = PasswordsPage.items

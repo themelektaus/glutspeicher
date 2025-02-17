@@ -3,6 +3,7 @@ button {
     border: none;
     padding: .425em .825em;
     user-select: none;
+    white-space: nowrap;
     
     &:not([disabled]) {
         background-color: var(--bg-color-3);

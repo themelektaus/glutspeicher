@@ -3,18 +3,20 @@
         Passwords
     </h1>
     <div class="toolbar">
-        <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
-        <button class="clone primary with-text" disabled style="background-image: url(static/res/contentcopy.svg); ">Clone</button>
-        <button class="action unloadExport with-text negative hidden" style="background-image: url(static/res/stop.svg); ">Unload</button>
-        <div style="flex: 1; "></div>
-        <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
-        <button class="action autoType with-text" style="background-image: url(static/res/keyboard.svg); white-space: nowrap; " disabled>Auto-Type</button>
-        <div style="flex: 0 0 7em; ">
+        <div style="flex: 1; ">
+            <button class="add primary with-text" style="background-image: url(static/res/add.svg); ">Add</button>
+            <button class="clone primary with-text" disabled style="background-image: url(static/res/contentcopy.svg); ">Clone</button>
+            <button class="action unloadExport with-text negative hidden" style="background-image: url(static/res/stop.svg); ">Unload</button>
+        </div>
+        <div style="flex: 2; ">
+            <button class="edit with-text" disabled style="background-image: url(static/res/edit.svg); ">Edit</button>
+            <button class="action autoType with-text" style="background-image: url(static/res/keyboard.svg); white-space: nowrap; " disabled>Auto-Type</button>
             <button class="action connect with-text hidden"></button>
         </div>
-        <div style="flex: 3; "></div>
-        <button class="action export with-text" disabled style="background-image: url(static/res/download.svg); ">Export</button>
-        <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+        <div style="flex: 1; justify-content: flex-end; ">
+            <button class="action export with-text" disabled style="background-image: url(static/res/download.svg); ">Export</button>
+            <button class="delete negative with-text" disabled style="background-image: url(static/res/delete.svg); ">Delete</button>
+        </div>
     </div>
     <div class="search">
         <input type="text" placeholder="Search" />

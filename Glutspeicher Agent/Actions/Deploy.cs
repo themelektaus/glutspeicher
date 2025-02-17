@@ -1,8 +1,10 @@
 ﻿using Renci.SshNet;
 using System;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace Glutspeicher.Agent;
 
@@ -61,6 +63,35 @@ public class Deploy
         if (solutionFile is null)
         {
             throw new($"{nameof(solutionFile)} not found");
+        }
+
+        var ok = false;
+
+        Application.SetHighDpiMode(HighDpiMode.SystemAware);
+        Application.EnableVisualStyles();
+
+        var dialog = new Dialog { Text = $"{nameof(Deploy)} to {sshHostname}" };
+
+        dialog.AddButton($"Yes", 100, Color.DarkGreen).Click += (sender, e) =>
+        {
+            dialog.SetInvisible();
+            ok = true;
+            dialog.Close();
+        };
+
+        dialog.AddButton($"No", 100, Color.DarkRed).Click += (sender, e) =>
+        {
+            dialog.SetInvisible();
+            dialog.Close();
+        };
+
+        dialog.BeforeShow();
+        dialog.ShowDialog();
+        dialog.Dispose();
+
+        if (!ok)
+        {
+            return;
         }
 
         DirectoryInfo serverBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build"));

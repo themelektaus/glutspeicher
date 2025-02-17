@@ -4,6 +4,11 @@
         margin-block-end: 1em;
         display: flex;
         gap: .5em;
+        
+        > div {
+            display: flex;
+            gap: .5em;
+        }
     }
     
     .content {

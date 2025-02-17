@@ -9,6 +9,11 @@
         display: flex;
         gap: .5em;
         
+        > div {
+            display: flex;
+            gap: .5em;
+        }
+        
         button.hidden {
             display: none;
         }
