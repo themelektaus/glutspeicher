@@ -306,26 +306,32 @@ class ExportsPage extends Page
         
         for (const row of rows.data)
         {
-            let item
+            const item = {
+                name: row.Name ?? ``,
+                uri: row.Uri ?? ``,
+                username: row.Username ?? ``,
+                password: row.Password ?? ``,
+                generatorId: +row.GeneratorId ?? 0,
+                generatedPassword: row.GeneratedPassword ?? null,
+                description: row.Description ?? null,
+                totp: row.Totp ?? null,
+                source: row.Source ?? ``,
+                section: row.Section ?? ``,
+                relayId: +row.RelayId ?? 0
+            }
             
             if (exportItem.script)
             {
-                item = eval(`(function(row) { ${exportItem.script} })(${JSON.stringify(row)})`)
-            }
-            else
-            {
-                item = {
-                    name: row.Name,
-                    uri: row.Uri,
-                    username: row.Username,
-                    password: row.Password,
-                    generatorId: +row.GeneratorId,
-                    generatedPassword: row.GeneratedPassword,
-                    description: row.Description,
-                    totp: row.Totp,
-                    source: row.Source,
-                    section: row.Section,
-                    relayId: +row.RelayId
+                const scriptItem = eval(`(function(row) { ${exportItem.script} })(${JSON.stringify(row)})`)
+                
+                if (!scriptItem)
+                {
+                    continue
+                }
+                
+                for (const key in scriptItem)
+                {
+                    item[key] = scriptItem[key]
                 }
             }
             

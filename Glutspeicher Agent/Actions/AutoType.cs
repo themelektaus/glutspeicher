@@ -48,8 +48,7 @@ public class AutoType
         var dialog = new Dialog(Math.Max(0, processesCount - 1))
         {
             Text = title ?? string.Empty,
-            followMouseSpace = new(200, 300),
-            viewportPosition = new(.5f, 1f)
+            followMouseSpace = new(200, 300)
         };
 
         var button1 = dialog.AddButton("Username && Password", 0, Color.DarkOliveGreen);

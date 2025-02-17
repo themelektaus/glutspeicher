@@ -29,9 +29,7 @@ class PasswordsPage extends Page
         
         this.$clone = this.$.query(`.clone`)
         this.$autoType = this.$.query(`.autoType`)
-        this.$rdp = this.$.query(`.rdp`)
-        this.$ssh = this.$.query(`.ssh`)
-        this.$web = this.$.query(`.web`)
+        this.$connect = this.$.query(`.connect`)
         
         this.$unloadExport = this.$.query(`.unloadExport`)
         
@@ -232,9 +230,7 @@ class PasswordsPage extends Page
         
         this.$clone.on(`click`, this.onClone.bind(this))
         this.$autoType.on(`click`, this.onAutoType.bind(this))
-        this.$rdp.on(`click`, this.onRdp.bind(this))
-        this.$ssh.on(`click`, this.onSsh.bind(this))
-        this.$web.on(`click`, this.onWeb.bind(this))
+        this.$connect.on(`click`, this.onConnect.bind(this))
         
         this.$unloadExport.on(`click`, this.onUnloadExport.bind(this))
         
@@ -292,8 +288,7 @@ class PasswordsPage extends Page
         
         this.$clone.off(`click`)
         this.$autoType.off(`click`)
-        this.$rdp.off(`click`)
-        this.$web.off(`click`)
+        this.$connect.off(`click`)
         
         this.$unloadExport.off(`click`)
         
@@ -492,9 +487,35 @@ class PasswordsPage extends Page
             
             this.$clone.setAttr(`disabled`, null)
             this.$autoType.setAttr(`disabled`, null)
-            this.$rdp.setAttr(`disabled`, uri.startsWith(`rdp://`) ? null : ``)
-            this.$ssh.setAttr(`disabled`, uri.startsWith(`ssh://`) ? null : ``)
-            this.$web.setAttr(`disabled`, (!uri.includes(`://`) || uri.startsWith(`http://`) || uri.startsWith(`https://`)) ? null : ``)
+            
+            if (uri.startsWith(`rdp://`))
+            {
+                this.$connect.setClass(`hidden`, false)
+                    .setData(`scheme`, `rdp`)
+                    .setStyle(`background-image`, `url(static/res/remotedesktop.svg`)
+                    .setInnerHtml(`RDP`)
+            }
+            else if (uri.startsWith(`ssh://`))
+            {
+                this.$connect.setClass(`hidden`, false)
+                    .setData(`scheme`, `ssh`)
+                    .setStyle(`background-image`, `url(static/res/console.svg`)
+                    .setInnerHtml(`SSH`)
+            }
+            else if (!uri.includes(`://`) || uri.startsWith(`http://`) || uri.startsWith(`https://`))
+            {
+                this.$connect.setClass(`hidden`, false)
+                    .setData(`scheme`, `web`)
+                    .setStyle(`background-image`, `url(static/res/externallink.svg`)
+                    .setInnerHtml(uri.startsWith(`http://`) ? `HTTP` : `HTTPS`)
+            }
+            else
+            {
+                this.$connect.setClass(`hidden`, true)
+                    .setData(`scheme`, null)
+                    .setStyle(`background-image`, null)
+                    .clearInnerHtml()
+            }
         }
         else
         {
@@ -503,9 +524,10 @@ class PasswordsPage extends Page
             
             this.$clone.setAttr(`disabled`, ``)
             this.$autoType.setAttr(`disabled`, ``)
-            this.$rdp.setAttr(`disabled`, ``)
-            this.$ssh.setAttr(`disabled`, ``)
-            this.$web.setAttr(`disabled`, ``)
+            this.$connect.setClass(`hidden`, true)
+                .setData(`scheme`, null)
+                .setStyle(`background-image`, null)
+                .clearInnerHtml()
         }
         
         this.$unloadExport.setClass(`hidden`, !PasswordsPage.isExport)
@@ -746,9 +768,12 @@ class PasswordsPage extends Page
         await this.showDialog(item)
     }
     
-    onAutoType()
+    onAutoType(options)
     {
-        playButtonAnimation(this.$autoType)
+        if (options?.buttonAimation !== false)
+        {
+            playButtonAnimation(this.$autoType)
+        }
         
         const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
         
@@ -772,7 +797,7 @@ class PasswordsPage extends Page
         
         if (!uri.includes(`://`))
         {
-            uri = `http://${uri}`
+            uri = `https://${uri}`
         }
         
         const index = rules.findIndex(x => uri.startsWith(`${x.scheme}://`))
@@ -825,34 +850,38 @@ class PasswordsPage extends Page
         }
     }
     
-    async onRdp()
+    async onConnect()
     {
-        playButtonAnimation(this.$rdp)
+        playButtonAnimation(this.$connect)
         
-        await this.onRelay([{ scheme: `rdp`, defaultPort: `3389` }], `Mstsc`, (data, item) => {
-            data.username = item.username
-            data.password = item.generatedPassword || item.password
-        })
-    }
-    
-    async onSsh()
-    {
-        playButtonAnimation(this.$ssh)
+        switch (this.$connect.getData(`scheme`))
+        {
+            case `rdp`:
+                await this.onRelay([{ scheme: `rdp`, defaultPort: `3389` }], `Mstsc`, (data, item) => {
+                    data.username = item.username
+                    data.password = item.generatedPassword || item.password
+                })
+            
+            case `ssh`:
+                await this.onRelay([{ scheme: `ssh`, defaultPort: `22` }], `Ssh`, (data, item) => {
+                    data.username = item.username
+                    data.password = item.generatedPassword || item.password
+                })
+                break
+            
+            case `web`:
+                await this.onRelay([{ scheme: `http`, defaultPort: `80` }, { scheme: `https`, defaultPort: `443` }], `Web`, (data, item) => {
+                    data.name = item.name,
+                    data.uri = item.uri.includes(`://`) ? item.uri : `https://${item.uri}`
+                }, true)
+                break
+        }
         
-        await this.onRelay([{ scheme: `ssh`, defaultPort: `22` }], `Ssh`, (data, item) => {
-            data.username = item.username
-            data.password = item.generatedPassword || item.password
-        })
-    }
-    
-    async onWeb()
-    {
-        playButtonAnimation(this.$web)
-        
-        await this.onRelay([{ scheme: `http`, defaultPort: `80` }, { scheme: `https`, defaultPort: `443` }], `Web`, (data, item) => {
-            data.name = item.name,
-            data.uri = item.uri.includes(`://`) ? item.uri : `http://${item.uri}`
-        }, true)
+        if (Data.load().autoTypeOnConnect)
+        {
+            await delay(1000)
+            this.onAutoType({ buttonAimation: false })
+        }
     }
     
     

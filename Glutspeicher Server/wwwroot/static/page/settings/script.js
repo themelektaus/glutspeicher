@@ -10,7 +10,10 @@ class SettingsPage extends Page
     {
         super.init()
         
+        this.$autoTypeOnConnect = this.$.query(`.autoTypeOnConnect`)
+        
         this.$animations = this.$.query(`.animations`)
+        
         this.$rebuildDatabase = this.$.query(`.rebuildDatabase`)
         this.$downloadDatabase = this.$.query(`.downloadDatabase`)
     }
@@ -19,9 +22,19 @@ class SettingsPage extends Page
     {
         this.data = Data.load()
         
+        this.$autoTypeOnConnect.checked = this.data.autoTypeOnConnect
+        this.$autoTypeOnConnect.on(`change`, () =>
+        {
+            this.data.page = `settings`
+            this.data.autoTypeOnConnect = this.$autoTypeOnConnect.checked
+            this.data.save()
+            App.updateBody()
+        })
+        
         this.$animations.checked = this.data.animations
         this.$animations.on(`change`, () =>
         {
+            this.data.page = `settings`
             this.data.animations = this.$animations.checked
             this.data.save()
             App.updateBody()
@@ -40,7 +53,10 @@ class SettingsPage extends Page
     
     stop()
     {
+        this.$autoTypeOnConnect.off(`change`)
+        
         this.$animations.off(`change`)
+        
         this.$rebuildDatabase.off(`change`)
         this.$downloadDatabase.off(`change`)
     }
