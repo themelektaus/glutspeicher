@@ -68,16 +68,7 @@ x-dialog {
         }
         
         .dialog-content {
-            overflow: hidden scroll;
-            
-            &::-webkit-scrollbar {
-                &-corner,
-                &-track,
-                &-thumb,
-                &-thumb:hover {
-                    background-color: #fff0;
-                }
-            }
+            overflow: hidden auto;
             
             .buttons {
                 display: flex;

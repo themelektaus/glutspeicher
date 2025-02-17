@@ -219,6 +219,9 @@ class PasswordsPage extends Page
             
             this.dialog.busy = false
         })
+        
+        this.infoDialog = dialogs[3]
+        this.infoDialog.$content.setClass(`markdown-html`)
     }
     
     async start()
@@ -405,7 +408,22 @@ class PasswordsPage extends Page
                 uri = `<span class="relay">relay</span>${uri}`
             }
             
-            $item.query(`.name`).setInnerHtml(item.name)
+            const $name = $item.query(`.name`)
+            $name.clearInnerHtml()
+            $name.create(`span`).setInnerHtml(item.name)
+            
+            if (item.description)
+            {
+                const $button = $name.create(`button`).setClass(`info`, true)
+                $button.addEventListener(`click`, () =>
+                {
+                    let html = item.description.replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, `$1<br>$2`)
+                    html = (new showdown.Converter()).makeHtml(html)
+                    this.infoDialog.$content.setInnerHtml(html)
+                    this.infoDialog.show()
+                    this.infoDialog.wait()
+                })
+            }
             
             if (item.username)
             {
@@ -504,7 +522,7 @@ class PasswordsPage extends Page
                     .setStyle(`background-image`, `url(static/res/console.svg`)
                     .setInnerHtml(`SSH`)
             }
-            else if (!uri.includes(`://`) || uri.startsWith(`http://`) || uri.startsWith(`https://`))
+            else if (uri && (!uri.includes(`://`) || uri.startsWith(`http://`) || uri.startsWith(`https://`)))
             {
                 this.$connect.setClass(`hidden`, false)
                     .setData(`scheme`, `web`)
@@ -896,7 +914,7 @@ class PasswordsPage extends Page
             PasswordsPage.isExport = false
             PasswordsPage.refreshNextTime = true
             
-            Page.getByName(`exports`).activate()
+            Page.getByName(`passwords`).activate()
         })
     }
     

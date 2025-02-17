@@ -2,6 +2,7 @@ button.action:not([disabled]):active {
     background-color: $bg-active !important;
 }
 
+button.info,
 button.eye,
 button.copy {
     width: 1.125em;
@@ -19,6 +20,11 @@ button.copy {
     &:active {
         opacity: 1 !important;
     }
+}
+
+button.info {
+    background-image: url(../res/info.svg);
+    opacity: .5;
 }
 
 button.eye {
@@ -72,6 +78,7 @@ button.copy {
     }
 }
 
+*:hover > * > button.info,
 *:hover > * > button.copy,
 *:hover > * > x-totp > button.copy,
 *:hover > * > button.eye {

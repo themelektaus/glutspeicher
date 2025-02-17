@@ -294,6 +294,11 @@ class ExportsPage extends Page
     {
         const items = await this.loadExport(this.selectedItemId)
         
+        for (const i in items)
+        {
+            items[i].id = -(+i + 1)
+        }
+        
         PasswordsPage.items = items
         PasswordsPage.isExport = true
         PasswordsPage.refreshNextTime = true
@@ -309,6 +314,11 @@ class ExportsPage extends Page
         {
             const items = await this.loadExport(id)
             allItems.push(...items)
+        }
+        
+        for (const i in allItems)
+        {
+            allItems[i].id = -(+i + 1)
         }
         
         PasswordsPage.items = allItems
@@ -367,7 +377,6 @@ class ExportsPage extends Page
             }
             
             items.push({
-                id: -items.length - 1,
                 name: item.name ?? ``,
                 uri: item.uri ?? ``,
                 username: item.username ?? ``,
