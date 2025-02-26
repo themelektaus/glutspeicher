@@ -5,4 +5,6 @@
       - 8100:80
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./Database.litedb:/app/Data/Database.litedb
+      - ../stacks/glutspeicher-demo/Data:/app/Data
+    environment:
+      - CRYPTO_KEY=00000000000000000000000000000000

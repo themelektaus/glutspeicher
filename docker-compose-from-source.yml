@@ -8,5 +8,6 @@
       - ../stacks/glutspeicher:/app
     environment:
       - TZ=Europe/Vienna
+      - CRYPTO_KEY=00000000000000000000000000000000
     working_dir: /app
     entrypoint: ["./Glutspeicher Server"]
