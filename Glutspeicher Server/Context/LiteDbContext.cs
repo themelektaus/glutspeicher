@@ -1,18 +1,19 @@
 ﻿using LiteDB;
 using System.IO;
+using System.IO.Compression;
 using System.Threading;
 
 namespace Glutspeicher.Server.Context;
 
 public class LiteDbContext : IDisposable
 {
-    public static readonly string path = Path.Combine("Data", "Database.litedb");
-
     static readonly SemaphoreSlim @lock = new(1, 1);
 
     public LiteDatabase Database { get; }
 
-    bool disposed;
+    readonly MemoryStream stream;
+
+    bool isDirty;
 
     public LiteDbContext()
     {
@@ -22,7 +23,42 @@ public class LiteDbContext : IDisposable
 
         try
         {
-            Database = new(path);
+            var fileEncrypted = new FileInfo(Path.Combine("Data", "Database.litedb.encrypted"));
+            byte[] data;
+
+            var file = new FileInfo(Path.Combine("Data", "Database.litedb"));
+
+            if (file.Exists)
+            {
+                data = File.ReadAllBytes(file.FullName);
+                Encrypt(ref data);
+
+                File.WriteAllBytes(fileEncrypted.FullName, data);
+                fileEncrypted.Refresh();
+
+                file.Delete();
+            }
+
+            var fileGzEncrypted = new FileInfo(Path.Combine("Data", "Database.litedb.gz.encrypted"));
+
+            if (fileGzEncrypted.Exists)
+            {
+                data = File.ReadAllBytes(fileGzEncrypted.FullName);
+                Decrypt(ref data);
+                GUnzip(ref data);
+                Encrypt(ref data);
+
+                File.WriteAllBytes(fileEncrypted.FullName, data);
+                fileEncrypted.Refresh();
+
+                fileGzEncrypted.Delete();
+            }
+
+            data = File.ReadAllBytes(fileEncrypted.FullName);
+            Decrypt(ref data);
+
+            stream = new(data);
+            Database = new(stream);
         }
         catch
         {
@@ -30,18 +66,67 @@ public class LiteDbContext : IDisposable
         }
     }
 
+    public void SetDirty() => isDirty = true;
+
     public void Dispose()
     {
-        if (!disposed)
+        if (stream is not null)
         {
-            disposed = true;
-            Database?.Dispose();
-            @lock.Release();
+            if (Database is not null)
+            {
+                Database.Dispose();
+
+                if (isDirty)
+                {
+                    Write(stream);
+                }
+            }
+
+            stream.Dispose();
         }
+
+        @lock.Release();
     }
 
-    public static FileStream Read()
+    static void Write(MemoryStream stream)
     {
-        return new FileStream(path, FileMode.Open, FileAccess.Read);
+        var data = stream.ToArray();
+
+        var compressedData = data;
+        GZip(ref compressedData);
+
+        Encrypt(ref compressedData);
+        File.WriteAllBytes(
+            Path.Combine("Data", $"Database {Now:yyyy-MM-dd HH-mm-ss}.litedb.gz.encrypted"),
+            compressedData
+        );
+
+        Encrypt(ref data);
+        File.WriteAllBytes(Path.Combine("Data", "Database.litedb.encrypted"), data);
+    }
+
+    static void GZip(ref byte[] data)
+    {
+        using var destinationStream = new MemoryStream();
+
+        using (var gzipStream = new GZipStream(destinationStream, CompressionMode.Compress, false))
+        {
+            gzipStream.Write(data, 0, data.Length);
+        }
+
+        data = destinationStream.ToArray();
+    }
+
+    static void GUnzip(ref byte[] data)
+    {
+        using var destinationStream = new MemoryStream();
+
+        using (var sourceStream = new MemoryStream(data))
+        {
+            using var gzipStream = new GZipStream(sourceStream, CompressionMode.Decompress, false);
+            gzipStream.CopyTo(destinationStream);
+        }
+
+        data = destinationStream.ToArray();
     }
 }

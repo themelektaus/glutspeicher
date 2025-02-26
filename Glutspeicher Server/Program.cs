@@ -7,6 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 LoadConfig(builder);
 
+if (CryptoKey.Length != 32)
+{
+    Console.WriteLine("Environment Variable \"CRYPTO_KEY\" => Length != 32");
+    return -1;
+}
+
 var services = builder.Services;
 
 services.AddTransient<LiteDbContext>();
@@ -20,3 +26,7 @@ app.UseMiddleware<NoCacheMiddleware>();
 app.Urls.Add($"http://[::]:{HttpPort}");
 
 await app.RunAsync();
+
+Dispose();
+
+return 0;

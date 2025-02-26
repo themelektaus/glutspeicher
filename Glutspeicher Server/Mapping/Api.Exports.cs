@@ -40,21 +40,22 @@ public static partial class Api
         {
             data ??= new();
             Collection(liteDbContext).Insert(data);
+            liteDbContext.SetDirty();
             return ApiResult.Ok(data);
         }
 
         public static IApiResult Put(LiteDbContext liteDbContext, [FromBody] Model.Export data)
         {
-            return ApiResult.OkIfTrue(
-                Collection(liteDbContext).Update(data)
-            );
+            var result = Collection(liteDbContext).Update(data);
+            liteDbContext.SetDirty();
+            return ApiResult.OkIfTrue(result);
         }
 
         public static IApiResult Delete(LiteDbContext liteDbContext, long id)
         {
-            return ApiResult.OkIfTrue(
-                Collection(liteDbContext).Delete(id)
-            );
+            var result = Collection(liteDbContext).Delete(id);
+            liteDbContext.SetDirty();
+            return ApiResult.OkIfTrue(result);
         }
     }
 }

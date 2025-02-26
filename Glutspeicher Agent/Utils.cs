@@ -60,7 +60,7 @@ public static class Utils
     static void Registry_User_DeleteValue(string path, string name)
     {
         using var key = Registry.CurrentUser.CreateSubKey(path);
-        key.DeleteValue(name, throwOnMissingValue: true);
+        key.DeleteValue(name, throwOnMissingValue: false);
     }
 
     public static async Task RunAsync(string fileName, string arguments, bool hidden)

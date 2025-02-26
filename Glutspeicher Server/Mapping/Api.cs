@@ -56,15 +56,20 @@ public static partial class Api
 
     public static IResult RebuildDatabase(LiteDbContext liteDbContext)
     {
-        return Results.Ok(liteDbContext.Database.Rebuild());
+        var result = liteDbContext.Database.Rebuild();
+        liteDbContext.SetDirty();
+        return Results.Ok(result);
     }
 
     public static IResult DownloadDatabase()
     {
+        var data = File.ReadAllBytes(Path.Combine("Data", "Database.litedb.encrypted"));
+        Decrypt(ref data);
+
         return Results.File(
-            LiteDbContext.Read(),
+            data,
             "application/octet-stream",
-            $"{Path.GetFileNameWithoutExtension(LiteDbContext.path)} {Now:yyyy-MM-dd HH-mm-ss}.litedb"
+            $"Database {Now:yyyy-MM-dd HH-mm-ss}.litedb"
         );
     }
 
