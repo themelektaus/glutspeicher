@@ -240,6 +240,11 @@ class PasswordsPage extends Page
         
         on(`keydown`, e =>
         {
+            if (App.isLocked)
+            {
+                return
+            }
+            
             let selectedItemId = null
             let $selectedItem
             
@@ -247,16 +252,11 @@ class PasswordsPage extends Page
             {
                 case `Escape`:
                     e.preventDefault()
-                    
-                    this.$searchInput.select()
-                    this.$searchInput.focus()
-                    
+                    selectedItemId = 0
                     break
                 
                 case `ArrowUp`:
                     e.preventDefault()
-                    
-                    this.$searchInput.focus()
                     
                     if (this.selectedItemId)
                     {
@@ -271,8 +271,6 @@ class PasswordsPage extends Page
                 case `ArrowDown`:
                     e.preventDefault()
                     
-                    this.$searchInput.focus()
-                    
                     if (this.selectedItemId)
                     {
                         selectedItemId = this.$items.query(`.selected ~ [hidden="false"]`)?.dataset.id ?? null
@@ -286,14 +284,24 @@ class PasswordsPage extends Page
                 case `Enter`:
                     e.preventDefault()
                     
-                    this.$searchInput.focus()
-                    
                     if (!this.$connect.hasClass(`hidden`))
                     {
                         this.onConnect({ buttonAimation: false })
                     }
                     break
                     
+                case `a`:
+                    if (e.ctrlKey)
+                    {
+                        e.preventDefault()
+                        
+                        if (this.$autoType.getAttribute(`disabled`) === null)
+                        {
+                            this.onAutoType({ buttonAimation: false })
+                        }
+                    }
+                    break
+                
                 case `x`:
                     if (e.ctrlKey)
                     {
@@ -306,7 +314,7 @@ class PasswordsPage extends Page
                         }
                     }
                     break
-                
+                    
                 case `c`:
                     if (e.ctrlKey)
                     {
@@ -342,6 +350,14 @@ class PasswordsPage extends Page
                     this.selectedItemId = selectedItemId
                     this.refreshSelection()
                 }
+            }
+        })
+        
+        this.$searchInput.on(`blur`, e =>
+        {
+            if (!App.isLocked)
+            {
+                this.$searchInput.focus()
             }
         })
         
@@ -408,6 +424,7 @@ class PasswordsPage extends Page
         this.$unloadExport.off(`click`)
         
         off(`keydown`)
+        this.$searchInput.off(`blur`)
         this.$searchInput.off(`input`)
     }
     
@@ -476,7 +493,7 @@ class PasswordsPage extends Page
                 $item.create(`div`).setClass(`keyword`, true).setClass(`source`, true)
                 $item.create(`div`).setClass(`keyword`, true).setClass(`section`, true)
                 
-                $item.addEventListener(`click`, () =>
+                $item.addEventListener(`mousedown`, () =>
                 {
                     this.selectedItemId = item.id
                     this.refreshSelection()
@@ -700,6 +717,8 @@ class PasswordsPage extends Page
         await form.refreshGeneratedPassword()
         await this.dialog.show()
         
+        this.$searchInput.blur()
+        
         let needsRefresh = false
         
         form.$save.on(`click`, async () =>
@@ -758,6 +777,8 @@ class PasswordsPage extends Page
         })
         
         await this.dialog.wait()
+        
+        this.$searchInput.focus()
         
         if (needsRefresh)
         {

@@ -31,6 +31,10 @@
     color: var(--fg-placeholder);
 }
 
+::selection {
+    background: $bg-active;
+}
+
 body:not(.animations) * {
     &, &::before, &::after {
         transition: none !important;

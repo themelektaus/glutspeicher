@@ -50,6 +50,8 @@ class Dialog extends Component
         this.$.setClass(`visible`, true)
         
         await delay(110)
+        
+        this.$.query(`input`)?.focus()
     }
     
     clear()
@@ -59,6 +61,14 @@ class Dialog extends Component
     
     async wait()
     {
+        on(`keydown`, async e =>
+        {
+            if (e.key == `Escape`)
+            {
+                await this.hide()
+            }
+        })
+        
         this.$.on(`click`, async e =>
         {
             if (!(this.hideOnBackdropClick ?? true))
@@ -90,6 +100,8 @@ class Dialog extends Component
     
     async hide()
     {
+        off(`keydown`)
+        
         this.$.off(`click`)
         this.$.setClass(`visible`, false)
         
