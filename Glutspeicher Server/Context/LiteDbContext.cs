@@ -30,13 +30,7 @@ public class LiteDbContext : IDisposable
 
             if (file.Exists)
             {
-                data = File.ReadAllBytes(file.FullName);
-                Encrypt(ref data);
-
-                File.WriteAllBytes(fileEncrypted.FullName, data);
-                fileEncrypted.Refresh();
-
-                file.Delete();
+                Convert(file, fileEncrypted);
             }
 
             var fileGzEncrypted = new FileInfo(Path.Combine("Data", "Database.litedb.gz.encrypted"));
@@ -54,16 +48,41 @@ public class LiteDbContext : IDisposable
                 fileGzEncrypted.Delete();
             }
 
+            if (!fileEncrypted.Exists)
+            {
+                var database = new LiteDatabase(file.FullName);
+                database.Dispose();
+
+                Convert(file, fileEncrypted);
+            }
+
             data = File.ReadAllBytes(fileEncrypted.FullName);
             Decrypt(ref data);
 
-            stream = new(data);
+            stream = new();
+
+            using (var temp = new MemoryStream(data))
+            {
+                temp.CopyTo(stream);
+            }
+
             Database = new(stream);
         }
         catch
         {
             Dispose();
         }
+    }
+
+    static void Convert(FileInfo file, FileInfo fileEncrypted)
+    {
+        var data = File.ReadAllBytes(file.FullName);
+        Encrypt(ref data);
+
+        File.WriteAllBytes(fileEncrypted.FullName, data);
+        fileEncrypted.Refresh();
+
+        file.Delete();
     }
 
     public void SetDirty() => isDirty = true;
