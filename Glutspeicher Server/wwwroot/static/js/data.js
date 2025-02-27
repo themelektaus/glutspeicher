@@ -5,7 +5,7 @@ class Data
     constructor(data)
     {
         this.page = data?.page ?? `passwords`
-        this.autoTypeOnConnect = data?.autoTypeOnConnect ?? true
+        this.autoTypeOnConnect = data?.autoTypeOnConnect ?? false
         this.animations = data?.animations ?? true
     }
     
