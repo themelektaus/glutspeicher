@@ -14,6 +14,8 @@ class Dialog extends Component
         this.$top = this.$window.create(`div`).setClass(`dialog-top`, true)
         this.$content = this.$window.create(`div`).setClass(`dialog-content`, true).setInnerHtml(html)
         this.$bottom = this.$window.create(`div`).setClass(`dialog-bottom`, true)
+        
+        this.onKeyDownBinding = this.onKeyDown.bind(this)
     }
     
     async load(callback)
@@ -61,13 +63,7 @@ class Dialog extends Component
     
     async wait()
     {
-        on(`keydown`, async e =>
-        {
-            if (e.key == `Escape`)
-            {
-                await this.hide()
-            }
-        })
+        addEventListener(`keydown`, this.onKeyDownBinding)
         
         this.$.on(`click`, async e =>
         {
@@ -98,9 +94,17 @@ class Dialog extends Component
         })
     }
     
+    async onKeyDown(e)
+    {
+        if (e.key == `Escape`)
+        {
+            await this.hide()
+        }
+    }
+    
     async hide()
     {
-        off(`keydown`)
+        removeEventListener(`keydown`, this.onKeyDownBinding)
         
         this.$.off(`click`)
         this.$.setClass(`visible`, false)

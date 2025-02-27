@@ -3,7 +3,8 @@
     "Start": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CRYPTO_KEY": "00000000000000000000000000000000"
       },
       "dotnetRunMessages": true
     }
