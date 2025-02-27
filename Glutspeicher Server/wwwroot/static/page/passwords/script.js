@@ -16,14 +16,6 @@ class PasswordsPage extends Page
         this.$delete = this.$.query(`.delete`)
         
         this.$content = this.$.query(`.content`)
-        this.$content.addEventListener(`click`, async e =>
-        {
-            if (!e.target.hierarchy.some(x => x.classList.contains(`item`)))
-            {
-                this.selectedItemId = 0
-                this.refreshSelection()
-            }
-        })
         
         this.$items = this.$content.query(`.items`)
         
@@ -73,9 +65,9 @@ class PasswordsPage extends Page
                         domain = `//${domain}`
                     }
                     
-                    const a = create(`a`);
-                    a.href = domain;
-                    domain = a.host
+                    const a = create(`a`)
+                    a.href = domain
+                    domain = a.hostname
                     
                     while (domain.split(`.`).length > 2)
                     {
@@ -204,11 +196,11 @@ class PasswordsPage extends Page
             for (const relay of await PasswordsPage.getRelays())
             {
                 $ul.create(`li`)
-                    .setInnerHtml(relay.hostname)
+                    .setInnerHtml(relay.name)
                     .setClass(`active`, relay.id == this.dialog.form.$relay.getData(`value`))
                     .addEventListener(`click`, async () =>
                     {
-                        this.dialog.form.$relay.value = relay.hostname
+                        this.dialog.form.$relay.value = relay.name
                         this.dialog.form.$relay.setData(`value`, relay.id)
                         await dialog2.hide()
                     })
@@ -233,15 +225,133 @@ class PasswordsPage extends Page
         
         this.$clone.on(`click`, this.onClone.bind(this))
         this.$autoType.on(`click`, this.onAutoType.bind(this))
-        this.$connect.on(`click`, this.onConnect.bind(this))
+        this.$connect.on(`click`, async () =>
+        {
+            await this.onConnect()
+            
+            if (Data.load().autoTypeOnConnect)
+            {
+                await delay(1000)
+                this.onAutoType({ buttonAimation: false })
+            }
+        })
         
         this.$unloadExport.on(`click`, this.onUnloadExport.bind(this))
         
-        this.$search.on(`input`, async () =>
+        on(`keydown`, e =>
+        {
+            let selectedItemId = null
+            let $selectedItem
+            
+            switch (e.key)
+            {
+                case `Escape`:
+                    e.preventDefault()
+                    
+                    this.$searchInput.select()
+                    this.$searchInput.focus()
+                    
+                    break
+                
+                case `ArrowUp`:
+                    e.preventDefault()
+                    
+                    this.$searchInput.focus()
+                    
+                    if (this.selectedItemId)
+                    {
+                        selectedItemId = [...this.$items.queryAll(`[hidden="false"]:has(~ .selected)`)].pop()?.dataset.id ?? null
+                    }
+                    else
+                    {
+                        selectedItemId = this.$items.query(`[hidden="false"]`)?.dataset.id
+                    }
+                    break
+                    
+                case `ArrowDown`:
+                    e.preventDefault()
+                    
+                    this.$searchInput.focus()
+                    
+                    if (this.selectedItemId)
+                    {
+                        selectedItemId = this.$items.query(`.selected ~ [hidden="false"]`)?.dataset.id ?? null
+                    }
+                    else
+                    {
+                        selectedItemId = this.$items.query(`[hidden="false"]`)?.dataset.id
+                    }
+                    break
+                
+                case `Enter`:
+                    e.preventDefault()
+                    
+                    this.$searchInput.focus()
+                    
+                    if (!this.$connect.hasClass(`hidden`))
+                    {
+                        this.onConnect({ buttonAimation: false })
+                    }
+                    break
+                    
+                case `x`:
+                    if (e.ctrlKey)
+                    {
+                        e.preventDefault()
+                        
+                        $selectedItem = this.$items.query(`.selected`)
+                        if ($selectedItem)
+                        {
+                            $selectedItem.query(`.username button.copy`).click()
+                        }
+                    }
+                    break
+                
+                case `c`:
+                    if (e.ctrlKey)
+                    {
+                        e.preventDefault()
+                        
+                        $selectedItem = this.$items.query(`.selected`)
+                        if ($selectedItem)
+                        {
+                            $selectedItem.query(`.password button.copy`).click()
+                        }
+                    }
+                    break
+                
+                case `v`:
+                    if (e.ctrlKey)
+                    {
+                        e.preventDefault()
+                        
+                        $selectedItem = this.$items.query(`.selected`)
+                        if ($selectedItem)
+                        {
+                            $selectedItem.query(`.totp button.copy`).click()
+                        }
+                    }
+                    break
+            }
+            
+            if (selectedItemId !== null)
+            {
+                selectedItemId = +selectedItemId
+                if (this.selectedItemId != selectedItemId)
+                {
+                    this.selectedItemId = selectedItemId
+                    this.refreshSelection()
+                }
+            }
+        })
+        
+        this.$searchInput.on(`input`, async e =>
         {
             this.noLimit = false
             await this.search()
         })
+        
+        this.$searchInput.focus()
     }
     
     async lateStart()
@@ -297,7 +407,8 @@ class PasswordsPage extends Page
         
         this.$unloadExport.off(`click`)
         
-        this.$search.off(`input`)
+        off(`keydown`)
+        this.$searchInput.off(`input`)
     }
     
     static async loadItems()
@@ -313,8 +424,7 @@ class PasswordsPage extends Page
     
     async onEdit()
     {
-        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
-        await this.showDialog(item)
+        await this.showDialog(this.getSelectedItem())
     }
 
     onExport()
@@ -427,9 +537,10 @@ class PasswordsPage extends Page
             
             if (item.username)
             {
+                const username = item.username.replace(/"/g, "&quot;")
                 $item.query(`.username`).setInnerHtml(
-                    `<span>${item.username}</span>` +
-                    `<button class="copy" data-value="${item.username}"></button>`
+                    `<span>${username}</span>` +
+                    `<button class="copy" data-value="${username}"></button>`
                 )
             }
             else
@@ -441,9 +552,11 @@ class PasswordsPage extends Page
             
             if (password)
             {
+                const passwordLength = password.length + 1
+                password = password.replace(/"/g, "&quot;")
                 $item.query(`.password`).setClass(`generated`, item.generatedPassword).setInnerHtml(
                     `<span>${password}</span>` +
-                    `<span>${Array(password.length + 1).join(`•`)}</span>` +
+                    `<span>${Array(passwordLength).join(`•`)}</span>` +
                     `<button class="eye"></button>` +
                     `<button class="copy" data-value="${password}"></button>`
                 )
@@ -492,11 +605,18 @@ class PasswordsPage extends Page
         const $items = this.$items.queryAll(`.item`)
         $items.forEach($ =>
         {
-            const id = $.getData(`id`)
-            $.setClass(`selected`, id == this.selectedItemId)
+            if ($.getData(`id`) == this.selectedItemId)
+            {
+                $.setClass(`selected`, true)
+                $.scrollIntoView({ block: `nearest` })
+            }
+            else
+            {
+                $.setClass(`selected`, false)
+            }
         })
         
-        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        const item = this.getSelectedItem()
         
         if (item)
         {
@@ -572,7 +692,7 @@ class PasswordsPage extends Page
         form.$generator.setData(`value`, generator.id)
         
         const relay = (await PasswordsPage.getRelays()).find(x => x.id == (item.relayId ?? 0)) ?? { id: item.relayId, hostname: item.relayId }
-        form.$relay.value = relay.hostname
+        form.$relay.value = relay.name
         form.$relay.setData(`value`, relay.id)
         
         form.$generatedPassword.setData(`value`, item.generatedPassword || ``)
@@ -646,6 +766,11 @@ class PasswordsPage extends Page
         
         this.dialog.form.$save.off(`click`)
         this.dialog.form.$cancel.off(`click`)
+    }
+    
+    getSelectedItem()
+    {
+        return PasswordsPage.items.find(x => x.id == this.selectedItemId)
     }
     
     
@@ -772,6 +897,30 @@ class PasswordsPage extends Page
             }
         }
         
+        if (!this.selectedItemId || this.$items.query(`.item.selected[hidden="true"]`))
+        {
+            const $targetSelection = this.$items.query(`.item[hidden="false"]`)
+            
+            if ($targetSelection)
+            {
+                const selectedItemId = +$targetSelection.dataset.id
+                
+                if (this.selectedItemId != selectedItemId)
+                {
+                    this.selectedItemId = selectedItemId
+                    this.refreshSelection()
+                }
+            }
+            else
+            {
+                if (this.selectedItemId)
+                {
+                    this.selectedItemId = 0
+                    this.refreshSelection()
+                }
+            }
+        }
+        
         this.#searching = false
         
         App.endLock()
@@ -781,7 +930,7 @@ class PasswordsPage extends Page
     
     async onClone()
     {
-        let item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        let item = this.getSelectedItem()
         item = JSON.parse(JSON.stringify(item))
         item.id = 0
         item.name += ` (Clone)`
@@ -795,7 +944,7 @@ class PasswordsPage extends Page
             playButtonAnimation(this.$autoType)
         }
         
-        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        const item = this.getSelectedItem()
         
         const data = {
             type: `AutoType`,
@@ -811,7 +960,7 @@ class PasswordsPage extends Page
     
     async onRelay(rules, type, loadAdditionalData, useWebCommandLine)
     {
-        const item = PasswordsPage.items.find(x => x.id == this.selectedItemId)
+        const item = this.getSelectedItem()
         
         let uri = item.uri
         
@@ -870,9 +1019,12 @@ class PasswordsPage extends Page
         }
     }
     
-    async onConnect()
+    async onConnect(options)
     {
-        playButtonAnimation(this.$connect)
+        if (options?.buttonAimation !== false)
+        {
+            playButtonAnimation(this.$connect)
+        }
         
         switch (this.$connect.getData(`scheme`))
         {
@@ -895,12 +1047,6 @@ class PasswordsPage extends Page
                     data.uri = item.uri.includes(`://`) ? item.uri : `https://${item.uri}`
                 }, true)
                 break
-        }
-        
-        if (Data.load().autoTypeOnConnect)
-        {
-            await delay(1000)
-            this.onAutoType({ buttonAimation: false })
         }
     }
     
@@ -937,6 +1083,6 @@ class PasswordsPage extends Page
             await RelaysPage.loadItems()
         }
         
-        return [ { id: 0, hostname: `None` }, ...RelaysPage.items ]
+        return [ { id: 0, name: `None` }, ...RelaysPage.items ]
     }
 }

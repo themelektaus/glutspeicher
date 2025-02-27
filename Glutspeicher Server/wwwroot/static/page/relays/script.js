@@ -157,7 +157,7 @@ class RelaysPage extends Page
                     .setClass(`item`, true)
                     .setData(`id`, item.id)
                 
-                $item.create(`div`).setClass(`hostname`, true)
+                $item.create(`div`).setClass(`name`, true)
                 
                 $item.addEventListener(`click`, () =>
                 {
@@ -166,7 +166,7 @@ class RelaysPage extends Page
                 })
             }
             
-            $item.query(`.hostname`).setInnerHtml(item.hostname)
+            $item.query(`.name`).setInnerHtml(item.name)
         }
         
         for (const $item of $items)

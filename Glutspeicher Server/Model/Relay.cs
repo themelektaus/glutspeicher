@@ -7,6 +7,8 @@ public partial class Relay
 {
     public long Id { get; set; }
 
+    public string Name { get; set; }
+
     public string Hostname { get; set; }
 
     public ushort SshPort { get; set; } = 22;
