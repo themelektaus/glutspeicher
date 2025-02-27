@@ -126,7 +126,7 @@ public class FrontendMiddleware(RequestDelegate next)
                     }
 
                     var data = Encoding.UTF8.GetBytes(content);
-                    
+
                     using var stream = new MemoryStream(data);
                     await stream.CopyToAsync(context.Response.Body);
 

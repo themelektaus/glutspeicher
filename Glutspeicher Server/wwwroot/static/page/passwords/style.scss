@@ -39,7 +39,7 @@
             
             .item {
                 display: grid;
-                grid-template-columns: 2.5fr 2fr 2fr 7.75em 3fr 1.25fr 1.25fr;
+                grid-template-columns: 2.5fr 2fr 2fr 8.5em 3fr 1.25fr 1.25fr;
                 padding: .5em;
                 
                 &:hover {
@@ -81,6 +81,14 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                }
+                
+                > .totp {
+                    display: flex;
+                }
+                
+                > .totp x-totp {
+                    margin-inline: auto 3.825em;
                 }
                 
                 .uri {

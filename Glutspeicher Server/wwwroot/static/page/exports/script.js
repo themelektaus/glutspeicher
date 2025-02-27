@@ -341,7 +341,7 @@ class ExportsPage extends Page
         
         const text = await response.text()
         
-        const rows = Papa.parse(text, { header: true })
+        const rows = Papa.parse(text.trim(), { header: true })
         
         const items = []
         
