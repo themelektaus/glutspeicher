@@ -94,10 +94,16 @@ public class Deploy
             return;
         }
 
-        DirectoryInfo serverBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build", "Linux"));
-        if (!serverBuild.Exists)
+        DirectoryInfo linuxServerBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build", "Linux"));
+        if (!linuxServerBuild.Exists)
         {
-            throw new DirectoryNotFoundException(serverBuild.FullName);
+            throw new DirectoryNotFoundException(linuxServerBuild.FullName);
+        }
+
+        DirectoryInfo windowsServerBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build", "Windows"));
+        if (!windowsServerBuild.Exists)
+        {
+            throw new DirectoryNotFoundException(windowsServerBuild.FullName);
         }
 
         DirectoryInfo agentBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Agent", "Build"));
@@ -115,15 +121,20 @@ public class Deploy
 
         tempFolder.Create();
 
-        CopyFiles(serverBuild, tempFolder);
+        CopyFiles(linuxServerBuild, tempFolder);
 
         Zip(
-            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-server.zip"),
-            serverBuild
+            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-server-for-linux.zip"),
+            linuxServerBuild
         );
 
         Zip(
-            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-agent.zip"),
+            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-server-for-windows.zip"),
+            windowsServerBuild
+        );
+
+        Zip(
+            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-agent-for-windows.zip"),
             agentBuild
         );
 

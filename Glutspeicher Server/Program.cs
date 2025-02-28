@@ -65,6 +65,8 @@ if (OperatingSystem.IsWindows())
         return 0;
     }
 }
+#elif DEBUG
+Environment.SetEnvironmentVariable("GLUTSPEICHER_CRYPTO_KEY", "00000000000000000000000000000000");
 #endif
 
 LoadEnvironmentVariables();
