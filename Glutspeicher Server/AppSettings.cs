@@ -15,10 +15,20 @@ public static class AppSettings
         var config = builder.Configuration;
 
         HttpPort = short.Parse(config[nameof(HttpPort)]);
+
+        if (HttpPort == 80 && OperatingSystem.IsWindows())
+        {
+            HttpPort += 5500;
+        }
+
         ServerVersion = config[nameof(ServerVersion)];
         AgentVersion = config[nameof(AgentVersion)];
+    }
+
+    public static void LoadEnvironmentVariables()
+    {
         CryptoKey = [.. Encoding.UTF8.GetBytes(
-            Environment.GetEnvironmentVariable("CRYPTO_KEY") ?? string.Empty
+            Environment.GetEnvironmentVariable("GLUTSPEICHER_CRYPTO_KEY") ?? string.Empty
         ).Take(32)];
     }
 }

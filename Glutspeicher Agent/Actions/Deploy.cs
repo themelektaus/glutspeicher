@@ -94,7 +94,7 @@ public class Deploy
             return;
         }
 
-        DirectoryInfo serverBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build"));
+        DirectoryInfo serverBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Server", "Build", "Linux"));
         if (!serverBuild.Exists)
         {
             throw new DirectoryNotFoundException(serverBuild.FullName);

@@ -7,4 +7,4 @@
       - /etc/localtime:/etc/localtime:ro
       - ../stacks/glutspeicher-demo/Data:/app/Data
     environment:
-      - CRYPTO_KEY=00000000000000000000000000000000
+      - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000
