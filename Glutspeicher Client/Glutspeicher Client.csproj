@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net9.0-windows</TargetFramework>
         <OutputType>WinExe</OutputType>
-        <UseWindowsForms>true</UseWindowsForms>
+        <!-- <UseWindowsForms>true</UseWindowsForms> -->
         <Version>0.2.9</Version>
     </PropertyGroup>
 
@@ -29,6 +29,8 @@
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="SSH.NET" Version="2024.2.0" />
+        <PackageReference Include="Vanara.PInvoke.Kernel32" Version="4.1.1" />
+        <PackageReference Include="Vanara.PInvoke.User32" Version="4.1.1" />
     </ItemGroup>
 
     <Import Project="Deploy.targets" />

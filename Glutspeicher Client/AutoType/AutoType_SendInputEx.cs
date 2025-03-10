@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 using StringComparison = System.StringComparison;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public static class AutoType_SendInputEx
 {

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public abstract class Relay
 {

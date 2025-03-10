@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public static partial class AutoType_NativeMethods
 {

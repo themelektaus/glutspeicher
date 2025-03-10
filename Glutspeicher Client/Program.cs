@@ -6,11 +6,11 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public static class Program
 {
-    [STAThread]
+    //[STAThread]
     public static async Task Main(string[] args)
     {
         Environment.CurrentDirectory = Path.GetDirectoryName(Environment.ProcessPath);
@@ -29,7 +29,7 @@ public static class Program
 
         try
         {
-            var @namespace = $"{nameof(Glutspeicher)}.{nameof(Glutspeicher.Agent)}";
+            var @namespace = $"{nameof(Glutspeicher)}.{nameof(Client)}";
             var types = Assembly.GetExecutingAssembly().GetTypes();
             var type = types.FirstOrDefault(x => x.Namespace == @namespace && x.Name == options["type"]);
 

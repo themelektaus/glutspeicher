@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public static class ProcessCommandLine
 {

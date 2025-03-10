@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public class Mstsc : Relay
 {

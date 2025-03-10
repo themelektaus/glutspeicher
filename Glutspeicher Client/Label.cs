@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public class Label : System.Windows.Forms.Label
 {

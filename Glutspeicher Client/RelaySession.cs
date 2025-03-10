@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public class RelaySession(string sourceNetwork, string destinationHost, ushort destinationPort)
 {

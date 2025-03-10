@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Windows.Forms;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public static class AutoType_KeyCodeCollection
 {

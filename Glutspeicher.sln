@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glutspeicher Server", "Glutspeicher Server\Glutspeicher Server.csproj", "{7CB978D3-6FD2-4440-B0E2-9B5313701148}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glutspeicher Agent", "Glutspeicher Agent\Glutspeicher Agent.csproj", "{B880E44C-1B37-4DAF-AC44-C6A013F79F86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glutspeicher Client", "Glutspeicher Client\Glutspeicher Client.csproj", "{B880E44C-1B37-4DAF-AC44-C6A013F79F86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

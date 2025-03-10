@@ -5,7 +5,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Environment = System.Environment;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 using SendMethod = AutoType_WindowInfo.SendMethod;
 

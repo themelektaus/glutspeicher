@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Windows.Forms;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
-public static class AutoType
+public partial class AutoType
 {
-    public static bool PerformIntoCurrentWindow(string keyString)
+    static bool PerformIntoCurrentWindow(string keyString)
     {
         Thread.Sleep(100);
         return Perform(keyString);
@@ -18,7 +18,7 @@ public static class AutoType
         return true;
     }
 
-    public static string Escape(string s)
+    static string Escape(string s)
     {
         var open = '\u25A1';
         while (s.Contains(open))
@@ -35,7 +35,7 @@ public static class AutoType
         return s;
     }
 
-    public static string Encode(string s)
+    static string Encode(string s)
     {
         s = s.Replace(@"[", @"{[}");
         s = s.Replace(@"]", @"{]}");

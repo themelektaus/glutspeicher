@@ -1,6 +1,6 @@
 ﻿using Process = System.Diagnostics.Process;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public sealed class AutoType_WindowInfo
 {

@@ -6,9 +6,9 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
-public class AutoType
+public partial class AutoType
 {
     public string title;
     public JArray text;
@@ -86,7 +86,7 @@ public class AutoType
 
     void PerformTextPart(int index, int count)
     {
-        BitwardenAgent.AutoType.PerformIntoCurrentWindow(
+        PerformIntoCurrentWindow(
             GetTextPartEncoded(index, count)
         );
     }
@@ -97,9 +97,9 @@ public class AutoType
             .Skip(index)
             .Select(x => x.ToString())
             .Where(x => !string.IsNullOrEmpty(x))
-            .Select(BitwardenAgent.AutoType.Escape)
+            .Select(Escape)
             .Take(count);
 
-        return BitwardenAgent.AutoType.Encode(string.Join('\t', lines) + '\n');
+        return Encode(string.Join('\t', lines) + '\n');
     }
 }

@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Glutspeicher Agent": {
+    "Glutspeicher Client": {
       "commandName": "Project"
     }
   }

@@ -6,7 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public class Deploy
 {
@@ -106,10 +106,10 @@ public class Deploy
             throw new DirectoryNotFoundException(windowsServerBuild.FullName);
         }
 
-        DirectoryInfo agentBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Agent", "Build"));
-        if (!agentBuild.Exists)
+        DirectoryInfo clientBuild = new(Path.Combine(solutionFile.DirectoryName, $"{solutionName} Client", "Build"));
+        if (!clientBuild.Exists)
         {
-            throw new DirectoryNotFoundException(agentBuild.FullName);
+            throw new DirectoryNotFoundException(clientBuild.FullName);
         }
 
         DirectoryInfo tempFolder = new(Path.Combine(solutionFile.DirectoryName, "Temp"));
@@ -134,8 +134,8 @@ public class Deploy
         );
 
         Zip(
-            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-agent-for-windows.zip"),
-            agentBuild
+            Path.Combine(tempFolder.FullName, "wwwroot", "static", "glutspeicher-client-for-windows.zip"),
+            clientBuild
         );
 
         using var sshClient = new SshClient(sshHostname, sshUsername, sshPassword);

@@ -1,4 +1,4 @@
-﻿namespace BitwardenAgent;
+﻿namespace Glutspeicher.Client;
 
 public sealed class AutoType_CharStream(string s)
 {

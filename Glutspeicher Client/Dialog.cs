@@ -1,5 +1,4 @@
-﻿using BitwardenAgent;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public class Dialog : Form
 {

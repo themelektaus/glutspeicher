@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Glutspeicher.Agent;
+namespace Glutspeicher.Client;
 
 public static class Utils
 {
@@ -16,13 +16,13 @@ public static class Utils
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 
-    public static void RegisterGlutspeicherAgentLink()
+    public static void RegisterGlutspeicherClientLink()
     {
-        Registry_User_AddScheme("glut", "Glutspeicher Agent Link", $"\"{Environment.ProcessPath}\" %1");
+        Registry_User_AddScheme("glut", "Glutspeicher Client Link", $"\"{Environment.ProcessPath}\" %1");
         Registry_User_SetValue(@"SOFTWARE\Microsoft\Terminal Server Client", "AuthenticationLevelOverride", 0);
     }
 
-    public static void UnregisterGlutspeicherAgentLink()
+    public static void UnregisterGlutspeicherClientLink()
     {
         Registry_User_DeleteScheme("glut");
         Registry_User_DeleteValue(@"SOFTWARE\Microsoft\Terminal Server Client", "AuthenticationLevelOverride");

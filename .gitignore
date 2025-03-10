@@ -8,4 +8,4 @@
 
 /Glutspeicher */**/*.user
 
-/Glutspeicher Agent/Deploy.targets
+/Glutspeicher Client/Deploy.targets

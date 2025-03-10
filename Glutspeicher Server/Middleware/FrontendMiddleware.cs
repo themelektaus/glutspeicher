@@ -118,7 +118,7 @@ public class FrontendMiddleware(RequestDelegate next)
 #else
                         content = $"DEBUG=false;{content}";
 #endif
-                        content = $"SERVER_VERSION=`{ServerVersion}`;AGENT_VERSION=`{AgentVersion}`;{content}";
+                        content = $"SERVER_VERSION=`{ServerVersion}`;CLIENT_VERSION=`{ClientVersion}`;{content}";
                     }
                     else if (isCSV)
                     {

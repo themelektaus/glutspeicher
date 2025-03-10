@@ -8,7 +8,7 @@ using Path = System.IO.Path;
 using Process = System.Diagnostics.Process;
 using StringComparison = System.StringComparison;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public static partial class AutoType_NativeMethods
 {

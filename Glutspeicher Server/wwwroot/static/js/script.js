@@ -28,7 +28,7 @@ on(`load`, async () =>
     App.listen()
     
     queryAll(`[SERVER_VERSION]`).forEach($ => $.setInnerHtml(SERVER_VERSION))
-    queryAll(`[AGENT_VERSION]`).forEach($ => $.setInnerHtml(AGENT_VERSION))
+    queryAll(`[CLIENT_VERSION]`).forEach($ => $.setInnerHtml(CLIENT_VERSION))
 })
 
 function renderCircle($canvas, v, color1, color2)

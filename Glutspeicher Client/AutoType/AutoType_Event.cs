@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace BitwardenAgent;
+namespace Glutspeicher.Client;
 
 public sealed class AutoType_Event
 {
