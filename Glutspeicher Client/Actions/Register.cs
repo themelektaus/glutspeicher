@@ -14,10 +14,9 @@ public class Register
     {
         using var dialog = new Window();
 
-        var rowLayout = new RowLayout(dialog)
-        {
-            Title = $"{nameof(Glutspeicher)} {nameof(Client)}"
-        };
+        var rowLayout = new WindowRowLayout(dialog);
+
+        rowLayout.AddTitleRow($"{nameof(Glutspeicher)} {nameof(Client)}");
 
         var registerButton = new Button
         {
@@ -30,7 +29,7 @@ public class Register
             dialog.Dispose();
             Utils.RegisterGlutspeicherClientLink();
         };
-        dialog.Add(registerButton);
+        dialog.AddControl(registerButton);
 
         var unregisterButton = new Button
         {
@@ -43,7 +42,7 @@ public class Register
             dialog.Dispose();
             Utils.UnregisterGlutspeicherClientLink();
         };
-        dialog.Add(unregisterButton);
+        dialog.AddControl(unregisterButton);
 
         dialog.ShowDialog();
     }

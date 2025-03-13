@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace Tausi.NativeWindow;
 
-public class RowLayout
+public abstract class RowLayout
 {
-    public string Title { get; set; }
+    public int Padding { get; set; }
 
-    public int Padding { get; set; } = 3;
-
-    int rowIndex;
+    int currentRowIndex;
 
     readonly Dictionary<Control, ControlInfo> controlInfos = [];
     struct ControlInfo
@@ -17,41 +16,25 @@ public class RowLayout
         public int rowIndex;
     }
 
-    public RowLayout(Window window)
-    {
-        window.OnAdd += Window_OnAdd;
-        window.OnBeforeCreateWindow += Window_OnBeforeCreateWindow;
-    }
-
     public void NextRow()
     {
-        rowIndex++;
+        currentRowIndex++;
     }
 
-    void Window_OnAdd(object sender, Window.AddEventArgs e)
+    protected void Register(Control control)
     {
-        controlInfos.Add(e.Control, new() { rowIndex = rowIndex });
+        controlInfos.Add(control, new() { rowIndex = currentRowIndex });
     }
 
-    void Window_OnBeforeCreateWindow(object sender, EventArgs e)
+    protected void Apply(out Size size)
     {
-        var window = sender as Window;
-
         var x = Padding;
-        var y = Padding / 2;
-
-        var titleLabel = new Label
-        {
-            X = x,
-            Y = y,
-            Text = Title,
-            Bold = true,
-        };
-
-        y -= Padding / 2;
+        var y = Padding;
 
         var rowIndex = -1;
         var width = 0;
+        var height = 0;
+        var rowHeight = 0;
 
         foreach (var (control, controlInfo) in controlInfos)
         {
@@ -59,7 +42,8 @@ public class RowLayout
             {
                 rowIndex = controlInfo.rowIndex;
                 x = Padding;
-                y += Padding + titleLabel.Height;
+                y += Padding + rowHeight;
+                rowHeight = 0;
             }
 
             control.X = x;
@@ -67,10 +51,9 @@ public class RowLayout
 
             x += control.Width + Padding;
 
-            if (width < x)
-            {
-                width = x;
-            }
+            width = Math.Max(height, x);
+            height = Math.Max(height, y + control.Height + Padding);
+            rowHeight = Math.Max(rowHeight, control.Height);
         }
 
         width += Padding - Padding;
@@ -83,10 +66,6 @@ public class RowLayout
             }
         }
 
-        window.Size = new(width, y + titleLabel.Height + Padding);
-
-        titleLabel.Width = width - Padding * 2;
-
-        window.Add(titleLabel);
+        size = new(width, height);
     }
 }

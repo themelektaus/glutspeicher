@@ -86,10 +86,9 @@ public class Web : Relay
             ViewportPoint = new(.5f, 1)
         };
 
-        var rowLayout = new RowLayout(dialog)
-        {
-            Title = text
-        };
+        var rowLayout = new WindowRowLayout(dialog);
+
+        rowLayout.AddTitleRow(text);
 
         var disconnectButton = new Button
         {
@@ -101,7 +100,7 @@ public class Web : Relay
         {
             dialog.Dispose();
         };
-        dialog.Add(disconnectButton);
+        dialog.AddControl(disconnectButton);
 
         dialog.ShowDialog();
     }

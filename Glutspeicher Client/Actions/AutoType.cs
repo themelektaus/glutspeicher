@@ -25,15 +25,14 @@ public partial class AutoType
     {
         using var dialog = new Window();
 
-        var followMouse = new FollowMouse(dialog)
+        var followMouse = new WindowFollowMouse(dialog)
         {
             FollowMouseSpace = new(200, 300)
         };
 
-        var rowLayout = new RowLayout(dialog)
-        {
-            Title = text
-        };
+        var rowLayout = new WindowRowLayout(dialog);
+
+        rowLayout.AddTitleRow(text);
 
         var button1 = new Button
         {
@@ -46,7 +45,7 @@ public partial class AutoType
             dialog.Dispose();
             actions.FirstOrDefault()?.Invoke();
         };
-        dialog.Add(button1);
+        dialog.AddControl(button1);
 
         rowLayout.NextRow();
 
@@ -62,7 +61,7 @@ public partial class AutoType
             actions.Skip(1).FirstOrDefault()?.Invoke();
             followMouse.Resume();
         };
-        dialog.Add(button2);
+        dialog.AddControl(button2);
 
         var button3 = new Button
         {
@@ -76,7 +75,7 @@ public partial class AutoType
             actions.Skip(2).FirstOrDefault()?.Invoke();
             followMouse.Resume();
         };
-        dialog.Add(button3);
+        dialog.AddControl(button3);
 
         var button4 = new Button
         {
@@ -88,7 +87,7 @@ public partial class AutoType
             followMouse.Pause();
             dialog.Dispose();
         };
-        dialog.Add(button4);
+        dialog.AddControl(button4);
 
         dialog.ShowDialog();
     }

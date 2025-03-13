@@ -8,15 +8,5 @@ public abstract class Control : Frame
 
     public nint Handle { get; set; }
 
-    protected Control()
-    {
-        Height = 29;
-    }
-
     public abstract void Create(Window window);
-
-    protected override void OnRectChanged()
-    {
-
-    }
 }

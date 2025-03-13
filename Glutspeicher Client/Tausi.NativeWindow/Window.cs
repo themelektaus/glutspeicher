@@ -22,6 +22,19 @@ public class Window : Frame
     string className;
     User32.WindowProc windowProc;
 
+    public override Rectangle Rect
+    {
+        get => base.Rect;
+        set
+        {
+            if (base.Rect != value)
+            {
+                base.Rect = value;
+                UpdateRect();
+            }
+        }
+    }
+
     float _Opacity;
     public float Opacity
     {
@@ -45,8 +58,8 @@ public class Window : Frame
 
     BackgroundWorker worker;
 
-    public event EventHandler<AddEventArgs> OnAdd;
-    public class AddEventArgs : EventArgs
+    public event EventHandler<AddControlEventArgs> OnAddControl;
+    public class AddControlEventArgs : EventArgs
     {
         public Control Control { get; init; }
     }
@@ -61,18 +74,14 @@ public class Window : Frame
         public BackgroundWorker Worker { get; init; }
     }
 
-    public event EventHandler<UpdateEventArgs> OnUpdate;
-    public class UpdateEventArgs : EventArgs
-    {
-        public int? Progress { get; set; }
-    }
+    public event EventHandler OnUpdate;
 
-    public void Add(Control control)
+    public void AddControl(Control control)
     {
         controls.Add(control);
         control.Id = controls.Count;
         control.Owner = this;
-        OnAdd?.Invoke(this, new() { Control = control });
+        OnAddControl?.Invoke(this, new() { Control = control });
     }
 
     nint backgroundColorBrush;
@@ -100,6 +109,10 @@ public class Window : Frame
 
     void CreateWindow()
     {
+#if DEBUG
+        Console.WriteLine(nameof(CreateWindow));
+#endif
+
         className = CLASS_NAME + (++classNameIndex);
         windowProc = WindowProc;
 
@@ -143,7 +156,7 @@ public class Window : Frame
         {
             while (Opacity < 1)
             {
-                Opacity += .25f;
+                Opacity += .2f;
                 Thread.Sleep(12);
             }
 
@@ -180,19 +193,14 @@ public class Window : Frame
                     }
                 }
 
-                var updateEventArgs = new UpdateEventArgs();
-                OnUpdate?.Invoke(this, updateEventArgs);
-                if (updateEventArgs.Progress.HasValue)
-                {
-                    worker.ReportProgress(updateEventArgs.Progress.Value);
-                }
+                OnUpdate?.Invoke(this, EventArgs.Empty);
 
                 Thread.Sleep(12);
             }
 
             while (Opacity > 0)
             {
-                Opacity -= .25f;
+                Opacity -= .2f;
                 Thread.Sleep(12);
             }
         };
@@ -211,11 +219,6 @@ public class Window : Frame
         }
     }
 
-    void Hide()
-    {
-        User32.ShowWindow(Handle, User32.ShowWindowCommand.SW_HIDE);
-    }
-
     bool disposing;
 
     public override void Dispose()
@@ -229,7 +232,7 @@ public class Window : Frame
 
         while (worker.IsBusy)
         {
-            Thread.Sleep(100);
+            Thread.Sleep(12);
         }
 
         worker.Dispose();
@@ -258,17 +261,36 @@ public class Window : Frame
         var xRange = new Point(Rect.Width, screenWidth - Rect.Width * 2);
         var yRange = new Point(Rect.Height, screenHeight - Rect.Height * 2);
 
-        _Rect.X = (int) (xRange.X + (xRange.Y - xRange.X) * ViewportPoint.X);
-        _Rect.Y = (int) (yRange.X + (yRange.Y - yRange.X) * ViewportPoint.Y);
+        var rect = base.Rect;
+        rect.X = (int) (xRange.X + (xRange.Y - xRange.X) * ViewportPoint.X);
+        rect.Y = (int) (yRange.X + (yRange.Y - yRange.X) * ViewportPoint.Y);
+        base.Rect = rect;
     }
 
-    protected override void OnRectChanged()
+    void UpdateRect()
     {
+        if (Handle == 0)
+        {
+            return;
+        }
+
+#if DEBUG
+        Console.WriteLine(nameof(UpdateRect));
+#endif
+
         User32.MoveWindow(Handle, X, Y, Width, Height, false);
     }
 
     void UpdateOpacity()
     {
+        if (Handle == 0)
+        {
+            return;
+        }
+
+#if DEBUG
+        Console.WriteLine(nameof(UpdateOpacity));
+#endif
         User32.SetLayeredWindowAttributes(Handle, default, (byte) (255 * Opacity), User32.LayeredWindowAttributes.LWA_ALPHA);
     }
 
@@ -343,7 +365,11 @@ public class Window : Frame
 
             if (label is Button button && button.Hover)
             {
-                backgroundColor = Color.FromArgb(backgroundColor.ToArgb() + Color.FromArgb(20, 20, 20).ToArgb());
+                backgroundColor = Color.FromArgb(
+                    Math.Min(255, backgroundColor.R + 20),
+                    Math.Min(255, backgroundColor.G + 20),
+                    Math.Min(255, backgroundColor.B + 20)
+                );
             }
 
             Gdi32.SetBkColor(hdc, ColorTranslator.ToWin32(backgroundColor));

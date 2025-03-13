@@ -18,6 +18,11 @@ public class Label : Control
 
     public bool Bold { get; set; }
 
+    public Label()
+    {
+        Height = 25;
+    }
+
     public override void Create(Window window)
     {
         const uint BS_OWNERDRAW = 0x0000000B;

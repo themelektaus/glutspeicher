@@ -165,14 +165,13 @@ public class Deploy
 
         using var dialog = new Window();
 
-        var rowLayout = new RowLayout(dialog)
-        {
-            Title = text
-        };
+        var rowLayout = new WindowRowLayout(dialog);
+
+        rowLayout.AddTitleRow(text);
 
         var yesButton = new Button
         {
-            Width = 100,
+            Width = 70,
             Text = "Yes",
             BackgroundColor = Color.DarkGreen
         };
@@ -181,11 +180,11 @@ public class Deploy
             ok = true;
             dialog.Dispose();
         };
-        dialog.Add(yesButton);
+        dialog.AddControl(yesButton);
 
         var noButton = new Button
         {
-            Width = 100,
+            Width = 70,
             Text = "No",
             BackgroundColor = Color.FromArgb(90, 40, 10)
         };
@@ -193,7 +192,7 @@ public class Deploy
         {
             dialog.Dispose();
         };
-        dialog.Add(noButton);
+        dialog.AddControl(noButton);
 
         dialog.ShowDialog();
 

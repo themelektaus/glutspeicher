@@ -15,5 +15,6 @@ public class Button : Label
     public Button()
     {
         Enabled = true;
+        Height = 29;
     }
 }

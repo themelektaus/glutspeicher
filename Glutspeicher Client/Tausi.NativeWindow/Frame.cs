@@ -5,6 +5,10 @@ namespace Tausi.NativeWindow;
 
 public abstract class Frame : IDisposable
 {
+    public virtual Rectangle Rect { get; set; }
+
+    public abstract void Dispose();
+
     public int X
     {
         get => Location.X;
@@ -88,22 +92,4 @@ public abstract class Frame : IDisposable
             }
         }
     }
-
-    protected Rectangle _Rect;
-    public Rectangle Rect
-    {
-        get => _Rect;
-        set
-        {
-            if (_Rect != value)
-            {
-                _Rect = value;
-                OnRectChanged();
-            }
-        }
-    }
-
-    protected abstract void OnRectChanged();
-
-    public abstract void Dispose();
 }
