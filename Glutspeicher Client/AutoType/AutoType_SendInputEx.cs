@@ -19,7 +19,7 @@ public static class AutoType_SendInputEx
         }
 
         locker.Enter();
-        
+
         try
         {
             Fix(events);

@@ -1,25 +1,24 @@
 ﻿using System;
-using Vanara.PInvoke;
 
 namespace Tausi.NativeWindow;
 
-public abstract class Control : IDisposable
+public abstract class Control : Frame
 {
     public int Id { get; set; }
 
     public Window Owner { get; set; }
 
-    public HWND Handle { get; set; }
+    public nint Handle { get; set; }
 
-    public int X { get; set; }
-
-    public int Y { get; set; }
-
-    public int Width { get; set; }
-
-    public int Height { get; set; } = 30;
+    protected Control()
+    {
+        Height = 29;
+    }
 
     public abstract void Create(Window window);
 
-    public abstract void Dispose();
+    protected override void OnRectChanged()
+    {
+        
+    }
 }

@@ -64,7 +64,7 @@ public class RowLayout
 
             control.X = x;
             control.Y = y;
-            
+
             x += control.Width + Padding;
 
             if (width < x)

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using Vanara.PInvoke;
 
 namespace Tausi.NativeWindow;
 
@@ -8,7 +7,7 @@ public class FollowMouse
 {
     public Point FollowMouseSpace { get; init; }
 
-    Point currentPosition;
+    Point currentLocation;
 
     bool paused;
 
@@ -33,18 +32,18 @@ public class FollowMouse
 
     void Window_OnAfterCreateWindow(object sender, EventArgs e)
     {
-        var window = sender as Window;
+        var frame = sender as Frame;
 
-        currentPosition = window.Position;
+        currentLocation = frame.Location;
     }
 
     void Window_OnCreateWorker(object sender, Window.CreateWorkerEventArgs e)
     {
-        var window = sender as Window;
+        var frame = sender as Frame;
 
         e.Worker.ProgressChanged += (_, _) =>
         {
-            window.Position = currentPosition;
+            frame.Location = currentLocation;
         };
     }
 
@@ -55,48 +54,48 @@ public class FollowMouse
             return;
         }
 
-        var window = sender as Window;
+        var frame = sender as Frame;
 
-        var targetPosition = currentPosition;
+        var targetLocation = currentLocation;
 
         User32.GetCursorPos(out var cursor);
         var cursorX = cursor.X;
         var cursorY = cursor.Y;
 
-        if (cursorX - currentPosition.X < -FollowMouseSpace.X)
+        if (cursorX - currentLocation.X < -FollowMouseSpace.X)
         {
-            targetPosition.X = cursorX + FollowMouseSpace.X;
+            targetLocation.X = cursorX + FollowMouseSpace.X;
         }
-        else if (cursorX - currentPosition.X - window.Width > FollowMouseSpace.X)
+        else if (cursorX - currentLocation.X - frame.Width > FollowMouseSpace.X)
         {
-            targetPosition.X = cursorX - window.Width - FollowMouseSpace.X;
-        }
-
-        if (cursorY - currentPosition.Y < -FollowMouseSpace.Y)
-        {
-            targetPosition.Y = cursorY + FollowMouseSpace.Y;
-        }
-        else if (cursorY - currentPosition.Y - window.Height > FollowMouseSpace.Y)
-        {
-            targetPosition.Y = cursorY - window.Height - FollowMouseSpace.Y;
+            targetLocation.X = cursorX - frame.Width - FollowMouseSpace.X;
         }
 
-        if (currentPosition != targetPosition)
+        if (cursorY - currentLocation.Y < -FollowMouseSpace.Y)
+        {
+            targetLocation.Y = cursorY + FollowMouseSpace.Y;
+        }
+        else if (cursorY - currentLocation.Y - frame.Height > FollowMouseSpace.Y)
+        {
+            targetLocation.Y = cursorY - frame.Height - FollowMouseSpace.Y;
+        }
+
+        if (currentLocation != targetLocation)
         {
             PointF delta = new(
-                targetPosition.X - currentPosition.X,
-                targetPosition.Y - currentPosition.Y
+                targetLocation.X - currentLocation.X,
+                targetLocation.Y - currentLocation.Y
             );
 
             if (Math.Abs(delta.X) > 1 || Math.Abs(delta.Y) > 1)
             {
-                currentPosition = new(
+                currentLocation = new(
                     delta.X < 0
-                        ? (int) Math.Floor(currentPosition.X + delta.X / 5)
-                        : (int) Math.Ceiling(currentPosition.X + delta.X / 5),
+                        ? (int) Math.Floor(currentLocation.X + delta.X / 5)
+                        : (int) Math.Ceiling(currentLocation.X + delta.X / 5),
                     delta.Y < 0
-                        ? (int) Math.Floor(currentPosition.Y + delta.Y / 5)
-                        : (int) Math.Ceiling(currentPosition.Y + delta.Y / 5)
+                        ? (int) Math.Floor(currentLocation.Y + delta.Y / 5)
+                        : (int) Math.Ceiling(currentLocation.Y + delta.Y / 5)
                 );
 
                 e.Progress = 0;

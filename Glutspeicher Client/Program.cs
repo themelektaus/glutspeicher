@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Vanara.PInvoke;
+using Tausi.NativeWindow;
 
 namespace Glutspeicher.Client;
 
@@ -13,9 +13,7 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
-        User32.SetThreadDpiAwarenessContext(
-            User32.DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED
-        );
+        User32.SetThreadDpiAwarenessContext(User32.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
 
         Environment.CurrentDirectory = Path.GetDirectoryName(Environment.ProcessPath);
 

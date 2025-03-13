@@ -4,7 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 using Tausi.NativeWindow;
-using Vanara.PInvoke;
 
 namespace Glutspeicher.Client;
 
@@ -78,11 +77,13 @@ public class Web : Relay
 
     public static void ShowDialog(string text)
     {
-        var screenWidth = Window.UseDC(x => Gdi32.GetDeviceCaps(x, Gdi32.DeviceCap.HORZRES));
+        var hdc = User32.GetDC();
+        var screenWidth = Gdi32.GetDeviceCaps(hdc, Gdi32.DeviceCap.HORZRES);
+        User32.ReleaseDC(hdc);
 
         using var dialog = new Window
         {
-            ViewportPosition = new(.5f, 1)
+            ViewportPoint = new(.5f, 1)
         };
 
         var rowLayout = new RowLayout(dialog)

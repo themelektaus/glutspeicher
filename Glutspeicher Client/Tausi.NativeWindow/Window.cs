@@ -4,71 +4,23 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
-using Vanara.PInvoke;
 
 namespace Tausi.NativeWindow;
 
-public class Window : IDisposable
+public class Window : Frame
 {
     const string CLASS_NAME = $"{nameof(Tausi)}{nameof(NativeWindow)}";
 
     static int classNameIndex;
 
-    public readonly static HINSTANCE moduleHandle = Kernel32.GetModuleHandle(null);
+    public readonly static nint moduleHandle = Kernel32.GetModuleHandle(null);
 
-    public HWND Handle { get; private set; }
+    public nint Handle { get; private set; }
 
     readonly List<Control> controls = [];
 
     string className;
     User32.WindowProc windowProc;
-
-    public int X => Rect.X;
-    public int Y => Rect.Y;
-    public int Width => Rect.Width;
-    public int Height => Rect.Height;
-
-    public Point Position
-    {
-        get => Rect.Location;
-        set
-        {
-            if (Rect.Location != value)
-            {
-                var rect = Rect;
-                rect.Location = value;
-                Rect = rect;
-            }
-        }
-    }
-
-    public Size Size
-    {
-        get => Rect.Size;
-        set
-        {
-            if (Rect.Size != value)
-            {
-                var rect = Rect;
-                rect.Size = value;
-                Rect = rect;
-            }
-        }
-    }
-
-    Rectangle _Rect;
-    public Rectangle Rect
-    {
-        get => _Rect;
-        set
-        {
-            if (_Rect != value)
-            {
-                _Rect = value;
-                UpdateRect();
-            }
-        }
-    }
 
     float _Opacity;
     public float Opacity
@@ -87,7 +39,7 @@ public class Window : IDisposable
 
     public Color BackgroundColor { get; set; } = Color.FromArgb(20, 20, 20);
 
-    public PointF ViewportPosition { get; set; } = new(.5f, .5f);
+    public PointF ViewportPoint { get; set; } = new(.5f, .5f);
 
     public bool Draggable { get; set; } = true;
 
@@ -123,18 +75,18 @@ public class Window : IDisposable
         OnAdd?.Invoke(this, new() { Control = control });
     }
 
-    HBRUSH backgroundColorBrush;
+    nint backgroundColorBrush;
 
     public void Show()
     {
         OnBeforeCreateWindow?.Invoke(this, EventArgs.Empty);
 
-        ApplyViewportPosition();
+        ApplyViewportPoint();
         CreateWindow();
 
         OnAfterCreateWindow?.Invoke(this, EventArgs.Empty);
 
-        User32.ShowWindow(Handle, ShowWindowCommand.SW_SHOWNORMAL);
+        User32.ShowWindow(Handle, User32.ShowWindowCommand.SW_SHOWNORMAL);
 
         CreateWorker();
         OnCreateWorker?.Invoke(this, new() { Worker = worker });
@@ -151,7 +103,7 @@ public class Window : IDisposable
         className = CLASS_NAME + (++classNameIndex);
         windowProc = WindowProc;
 
-        backgroundColorBrush = Gdi32.CreateSolidBrush(BackgroundColor);
+        backgroundColorBrush = Gdi32.CreateSolidBrush(ColorTranslator.ToWin32(BackgroundColor));
 
         var windowClass = new User32.WNDCLASS
         {
@@ -168,10 +120,10 @@ public class Window : IDisposable
             dwExStyle: User32.WindowStylesEx.WS_EX_TOPMOST | User32.WindowStylesEx.WS_EX_NOACTIVATE | User32.WindowStylesEx.WS_EX_LAYERED,
             lpClassName: className,
             dwStyle: User32.WindowStyles.WS_POPUP,
-            X: Rect.X,
-            Y: Rect.Y,
-            nWidth: Rect.Width,
-            nHeight: Rect.Height,
+            X: X,
+            Y: Y,
+            nWidth: Width,
+            nHeight: Height,
             hInstance: moduleHandle
         );
 
@@ -207,22 +159,23 @@ public class Window : IDisposable
                 {
                     if (control is Button button)
                     {
-                        var rect = new RECT(
-                            left: winPos.X + button.X,
-                            top: winPos.Y + button.Y,
-                            right: winPos.X + button.X + button.Width,
-                            bottom: winPos.Y + button.Y + button.Height
-                        );
+                        var rect = new User32.RECT()
+                        {
+                            Left = winPos.X + button.X,
+                            Top = winPos.Y + button.Y,
+                            Right = winPos.X + button.X + button.Width,
+                            Bottom = winPos.Y + button.Y + button.Height
+                        };
 
-                        var hover = curPos.X >= rect.left
-                            && curPos.X < rect.right
-                            && curPos.Y >= rect.top
-                            && curPos.Y < rect.bottom;
+                        var hover = curPos.X >= rect.Left
+                            && curPos.X < rect.Right
+                            && curPos.Y >= rect.Top
+                            && curPos.Y < rect.Bottom;
 
                         if (button.Hover != hover)
                         {
                             button.Hover = hover;
-                            User32.InvalidateRect(button.Handle, null, true);
+                            User32.InvalidateRect(button.Handle, 0, true);
                         }
                     }
                 }
@@ -260,12 +213,12 @@ public class Window : IDisposable
 
     void Hide()
     {
-        User32.ShowWindow(Handle, ShowWindowCommand.SW_HIDE);
+        User32.ShowWindow(Handle, User32.ShowWindowCommand.SW_HIDE);
     }
 
     bool disposing;
 
-    public virtual void Dispose()
+    public override void Dispose()
     {
         if (disposing)
         {
@@ -295,65 +248,72 @@ public class Window : IDisposable
         User32.UnregisterClass(className, moduleHandle);
     }
 
-    void ApplyViewportPosition()
+    void ApplyViewportPoint()
     {
-        var (screenWidth, screenHeight) = UseDC(x =>
-        {
-            return (
-                Gdi32.GetDeviceCaps(x, Gdi32.DeviceCap.HORZRES),
-                Gdi32.GetDeviceCaps(x, Gdi32.DeviceCap.VERTRES)
-            );
-        });
+        var hdc = User32.GetDC();
+        var screenWidth = Gdi32.GetDeviceCaps(hdc, Gdi32.DeviceCap.HORZRES);
+        var screenHeight = Gdi32.GetDeviceCaps(hdc, Gdi32.DeviceCap.VERTRES);
+        User32.ReleaseDC(hdc);
 
         var xRange = new Point(Rect.Width, screenWidth - Rect.Width * 2);
         var yRange = new Point(Rect.Height, screenHeight - Rect.Height * 2);
 
-        _Rect.X = (int) (xRange.X + (xRange.Y - xRange.X) * ViewportPosition.X);
-        _Rect.Y = (int) (yRange.X + (yRange.Y - yRange.X) * ViewportPosition.Y);
+        _Rect.X = (int) (xRange.X + (xRange.Y - xRange.X) * ViewportPoint.X);
+        _Rect.Y = (int) (yRange.X + (yRange.Y - yRange.X) * ViewportPoint.Y);
     }
 
-    void UpdateRect()
+    protected override void OnRectChanged()
     {
-        User32.MoveWindow(Handle, Rect.X, Rect.Y, Rect.Width, Rect.Height, false);
+        User32.MoveWindow(Handle, X, Y, Width, Height, false);
     }
 
     void UpdateOpacity()
     {
-        User32.SetLayeredWindowAttributes(Handle, 0, (byte) (255 * Opacity), User32.LayeredWindowAttributes.LWA_ALPHA);
+        User32.SetLayeredWindowAttributes(Handle, default, (byte) (255 * Opacity), User32.LayeredWindowAttributes.LWA_ALPHA);
     }
 
-    nint WindowProc(HWND hwnd, uint uMsg, nint wParam, nint lParam)
+    nint WindowProc(nint hwnd, uint uMsg, nint wParam, nint lParam)
     {
-        var message = (User32.WindowMessage) uMsg;
+        var message = uMsg;
+
+        const uint WM_NCHITTEST = 0x0084;
+        const uint WM_MOUSEACTIVATE = 0x0021;
+        const uint WM_CLOSE = 0x0010;
+        const uint WM_DESTROY = 0x0002;
+        const uint WM_CTLCOLORBTN = 0x0135;
+        const uint WM_COMMAND = 0x0111;
+
+        const nint HTCAPTION = 2;
+        const nint MA_NOACTIVATE = 3;
 
         switch (message)
         {
-            case User32.WindowMessage.WM_NCHITTEST:
+            case WM_NCHITTEST:
                 if (Draggable)
                 {
-                    return (nint) User32.HitTestValues.HTCAPTION;
+                    return HTCAPTION;
                 }
                 break;
 
-            case User32.WindowMessage.WM_MOUSEACTIVATE:
-                return (nint) User32.WM_MOUSEACTIVATE_RETURN.MA_NOACTIVATE;
+            case WM_MOUSEACTIVATE:
+                return MA_NOACTIVATE;
 
-            case User32.WindowMessage.WM_CLOSE:
+            case WM_CLOSE:
                 Dispose();
                 return 0;
 
-            case User32.WindowMessage.WM_DESTROY:
+            case WM_DESTROY:
                 User32.PostQuitMessage(0);
                 return 0;
 
-            case User32.WindowMessage.WM_CTLCOLORBTN:
+            case WM_CTLCOLORBTN:
                 if (HandleRendering(wParam, lParam, out var brush))
                 {
-                    return (nint) brush;
+                    return brush;
                 }
                 break;
 
-            case User32.WindowMessage.WM_COMMAND:
+            case WM_COMMAND:
                 HandleCommand(wParam);
                 break;
         }
@@ -369,8 +329,10 @@ public class Window : IDisposable
         }
     }
 
-    bool HandleRendering(HDC hdc, HWND handle, out HBRUSH brush)
+    bool HandleRendering(nint hdc, nint handle, out nint brush)
     {
+        const uint TA_CENTER = 6;
+
         var control = controls.FirstOrDefault(x => x.Handle == handle);
 
         if (control is Label label)
@@ -379,18 +341,18 @@ public class Window : IDisposable
                 ? BackgroundColor
                 : label.BackgroundColor;
 
-
             if (label is Button button && button.Hover)
             {
                 backgroundColor = Color.FromArgb(backgroundColor.ToArgb() + Color.FromArgb(20, 20, 20).ToArgb());
             }
 
-            Gdi32.SetBkColor(hdc, backgroundColor);
+            Gdi32.SetBkColor(hdc, ColorTranslator.ToWin32(backgroundColor));
 
             if (!string.IsNullOrWhiteSpace(label.Text))
             {
-                Gdi32.SetTextColor(hdc, label.TextColor);
-                Gdi32.SetTextAlign(hdc, Gdi32.TextAlign.TA_CENTER);
+                Gdi32.SetTextColor(hdc, ColorTranslator.ToWin32(label.TextColor));
+
+                Gdi32.SetTextAlign(hdc, TA_CENTER);
 
                 var font = label.CreateFont();
                 var previousFont = Gdi32.SelectObject(hdc, font);
@@ -399,19 +361,11 @@ public class Window : IDisposable
                 Gdi32.DeleteFont(font);
             }
 
-            brush = Gdi32.CreateSolidBrush(backgroundColor);
+            brush = Gdi32.CreateSolidBrush(ColorTranslator.ToWin32(backgroundColor));
             return true;
         }
 
-        brush = HBRUSH.NULL;
+        brush = 0;
         return false;
-    }
-
-    public static T UseDC<T>(Func<HDC, T> callback)
-    {
-        var hdc = User32.GetDC();
-        var result = callback(hdc);
-        User32.ReleaseDC(0, hdc);
-        return result;
     }
 }
