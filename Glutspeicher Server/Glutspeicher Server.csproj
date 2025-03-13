@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <CompressionEnabled>false</CompressionEnabled>
-        <Version>0.5.5</Version>
+        <Version>0.5.7</Version>
     </PropertyGroup>
 
     <ItemGroup>

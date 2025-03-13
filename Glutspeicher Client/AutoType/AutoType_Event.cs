@@ -1,6 +1,4 @@
-﻿using System.Windows.Forms;
-
-namespace Glutspeicher.Client;
+﻿namespace Glutspeicher.Client;
 
 public sealed class AutoType_Event
 {
@@ -8,7 +6,7 @@ public sealed class AutoType_Event
     public Type type;
     public int vKey;
     public bool? isExtendedKey;
-    public Keys keyModifier;
+    public int keyModifier;
     public char @char = char.MinValue;
     public bool? down;
     public string text;

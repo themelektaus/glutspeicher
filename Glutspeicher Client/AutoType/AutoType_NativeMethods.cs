@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Glutspeicher.Client;
 
-public static partial class AutoType_NativeMethods
+public static class AutoType_NativeMethods
 {
     public const int VK_SHIFT = 0x10;
     public const int VK_CONTROL = 0x11;
@@ -68,39 +68,8 @@ public static partial class AutoType_NativeMethods
         public uint dwTime;
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-    public struct SHFILEINFO
-    {
-        public nint hIcon;
-        public int iIcon;
-        public uint dwAttributes;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string szDisplayName;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
-        public string szTypeName;
-    }
-
-    [DllImport("User32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool IsWindow(nint hWnd);
-
-    [DllImport("User32.dll")]
-    public static extern nint GetWindow(nint hWnd, uint uCmd);
-
-    [DllImport("User32.dll", CharSet = CharSet.Auto, ExactSpelling = false, SetLastError = true)]
-    public static extern int GetWindowLong(nint hWnd, int nIndex);
-
-    [DllImport("User32.dll", CharSet = CharSet.Auto, ExactSpelling = false, SetLastError = true)]
-    static extern int GetWindowTextLength(nint hWnd);
-
     [DllImport("User32.dll")]
     public static extern nint GetForegroundWindow();
-
-    [DllImport("User32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool SetForegroundWindow(nint hWnd);
 
     [DllImport("User32.dll", EntryPoint = "SendInput", SetLastError = true)]
     public static extern uint SendInput32(uint nInputs, INPUT32[] pInputs, int cbSize);
@@ -149,6 +118,87 @@ public static partial class AutoType_NativeMethods
     [DllImport("User32.dll")]
     public static extern uint GetWindowThreadProcessId(nint hWnd, [Out] out uint lpdwProcessId);
 
-    [DllImport("User32.dll", CharSet = CharSet.Auto, ExactSpelling = false, SetLastError = true)]
-    static extern int GetWindowText(nint hWnd, nint lpString, int nMaxCount);
+    public static uint? GetLastInputTime()
+    {
+        var lastInputInfo = new LASTINPUTINFO
+        {
+            cbSize = (uint) Marshal.SizeOf<LASTINPUTINFO>()
+        };
+
+        if (GetLastInputInfo(ref lastInputInfo))
+        {
+            return lastInputInfo.dwTime;
+        }
+
+        return null;
+    }
+
+    public static uint MapVirtualKey3(uint uCode, uint uMapType, nint hKL)
+    {
+        if (hKL == nint.Zero)
+            return MapVirtualKey(uCode, uMapType);
+
+        return MapVirtualKeyEx(uCode, uMapType, hKL);
+    }
+
+    public static ushort VkKeyScan3(char ch, nint hKL)
+    {
+        if (hKL == nint.Zero)
+            return VkKeyScan(ch);
+
+        return VkKeyScanEx(ch, hKL);
+    }
+
+    public static string ToUnicode3(int vKey, byte[] pbKeyState, nint hKL)
+    {
+        var pState = nint.Zero;
+
+        try
+        {
+            uint uScanCode = MapVirtualKey3((uint) vKey, 0, hKL);
+
+            pState = Marshal.AllocHGlobal(256);
+            if (pState == nint.Zero)
+                return null;
+
+            if (pbKeyState is null)
+                return null;
+
+            if (pbKeyState.Length != 256)
+                return null;
+
+            Marshal.Copy(pbKeyState, 0, pState, 256);
+
+            var sbUni = new StringBuilder(32);
+
+            var r = hKL == nint.Zero
+                ? ToUnicode((uint) vKey, uScanCode, pState, sbUni, 30, 0)
+                : ToUnicodeEx((uint) vKey, uScanCode, pState, sbUni, 30, 0, hKL);
+
+            if (r < 0)
+                return string.Empty;
+
+            if (r == 0)
+                return null;
+
+            var str = sbUni.ToString();
+
+            if (string.IsNullOrEmpty(str))
+                return null;
+
+            if (r < str.Length)
+                str = str[..r];
+
+            return str;
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            if (pState != nint.Zero)
+                Marshal.FreeHGlobal(pState);
+        }
+    }
 }

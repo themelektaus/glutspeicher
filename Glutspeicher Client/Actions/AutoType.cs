@@ -1,10 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Reflection;
-using System.Windows.Forms;
+using Tausi.NativeWindow;
 
 namespace Glutspeicher.Client;
 
@@ -15,73 +14,84 @@ public partial class AutoType
 
     public void Run()
     {
-        var assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+        ShowDialog(
+            title,
+            () => PerformTextPart(0, 2),
+            () => PerformTextPart(0, 1),
+            () => PerformTextPart(1, 1)
+        );
+    }
 
-        var processesCount = Process.GetProcessesByName(assemblyName)
-            .Where(process =>
-            {
-                if (ProcessCommandLine.Retrieve(process, out var commandLine) == 0)
-                {
-                    var args = Utils.EnumerateArgs(commandLine);
+    public static void ShowDialog(string text, params Action[] actions)
+    {
+        using var dialog = new Window();
 
-                    if (Utils.ReadGlutLink(args)?.TryGetValue("type", out var type) ?? false)
-                    {
-                        if (type == nameof(AutoType))
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            })
-            .Count();
-
-        if (processesCount > 3)
+        var followMouse = new FollowMouse(dialog)
         {
-            return;
-        }
-
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.EnableVisualStyles();
-
-        var dialog = new Dialog(Math.Max(0, processesCount - 1))
-        {
-            Text = title ?? string.Empty,
-            followMouseSpace = new(200, 300)
+            FollowMouseSpace = new(200, 300)
         };
 
-        var button1 = dialog.AddButton("Username && Password", 0, Color.DarkOliveGreen);
-        var button2 = dialog.AddButton("Username", 100, Color.DarkSlateBlue);
-        var button3 = dialog.AddButton("Password", 100, Color.DarkSlateBlue);
-        var button4 = dialog.AddButton("Cancel", 70, Color.DimGray);
-
-        button1.Click += (sender, e) =>
+        var rowLayout = new RowLayout(dialog)
         {
-            dialog.SetInvisible();
-            PerformTextPart(0, 2);
-            dialog.Close();
+            Title = text
         };
 
-        button2.Click += (sender, e) =>
+        var button1 = new Button
         {
-            PerformTextPart(0, 1);
+            Text = "Username & Password",
+            BackgroundColor = Color.DarkOliveGreen
         };
-
-        button3.Click += (sender, e) =>
+        button1.Click += (_, _) =>
         {
-            PerformTextPart(1, 1);
+            followMouse.Pause();
+            dialog.Dispose();
+            actions.FirstOrDefault()?.Invoke();
         };
+        dialog.Add(button1);
 
-        button4.Click += (sender, e) =>
+        rowLayout.NextRow();
+
+        var button2 = new Button
         {
-            dialog.SetInvisible();
-            dialog.Close();
+            Width = 100,
+            Text = "Username",
+            BackgroundColor = Color.DarkSlateBlue
         };
+        button2.Click += (_, _) =>
+        {
+            followMouse.Pause();
+            actions.Skip(1).FirstOrDefault()?.Invoke();
+            followMouse.Resume();
+        };
+        dialog.Add(button2);
 
-        dialog.BeforeShow();
+        var button3 = new Button
+        {
+            Width = 100,
+            Text = "Password",
+            BackgroundColor = Color.DarkSlateBlue
+        };
+        button3.Click += (_, _) =>
+        {
+            followMouse.Pause();
+            actions.Skip(2).FirstOrDefault()?.Invoke();
+            followMouse.Resume();
+        };
+        dialog.Add(button3);
+
+        var button4 = new Button
+        {
+            Width = 70,
+            Text = "Close"
+        };
+        button4.Click += (_, _) =>
+        {
+            followMouse.Pause();
+            dialog.Dispose();
+        };
+        dialog.Add(button4);
+
         dialog.ShowDialog();
-        dialog.Dispose();
     }
 
     void PerformTextPart(int index, int count)

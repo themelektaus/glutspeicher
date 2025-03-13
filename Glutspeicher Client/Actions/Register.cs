@@ -1,5 +1,5 @@
 ﻿using System.Drawing;
-using System.Windows.Forms;
+using Tausi.NativeWindow;
 
 namespace Glutspeicher.Client;
 
@@ -7,27 +7,44 @@ public class Register
 {
     public void Run()
     {
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.EnableVisualStyles();
+        ShowDialog();
+    }
 
-        var dialog = new Dialog { Text = $"{nameof(Glutspeicher)} {nameof(Client)}" };
+    public static void ShowDialog()
+    {
+        using var dialog = new Window();
 
-        dialog.AddButton($"Register", 100, Color.DarkGreen).Click += (sender, e) =>
+        var rowLayout = new RowLayout(dialog)
         {
-            dialog.SetInvisible();
+            Title = $"{nameof(Glutspeicher)} {nameof(Client)}"
+        };
+
+        var registerButton = new Button
+        {
+            Width = 100,
+            Text = "Register",
+            BackgroundColor = Color.DarkGreen
+        };
+        registerButton.Click += (_, _) =>
+        {
+            dialog.Dispose();
             Utils.RegisterGlutspeicherClientLink();
-            dialog.Close();
         };
+        dialog.Add(registerButton);
 
-        dialog.AddButton($"Unregister", 100, Color.DarkRed).Click += (sender, e) =>
+        var unregisterButton = new Button
         {
-            dialog.SetInvisible();
-            Utils.UnregisterGlutspeicherClientLink();
-            dialog.Close();
+            Width = 100,
+            Text = "Unregister",
+            BackgroundColor = Color.FromArgb(90, 40, 10)
         };
+        unregisterButton.Click += (_, _) =>
+        {
+            dialog.Dispose();
+            Utils.UnregisterGlutspeicherClientLink();
+        };
+        dialog.Add(unregisterButton);
 
-        dialog.BeforeShow();
         dialog.ShowDialog();
-        dialog.Dispose();
     }
 }

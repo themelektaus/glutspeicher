@@ -4,21 +4,15 @@ public sealed class AutoType_CharStream(string s)
 {
     readonly string s = s;
 
-    int position = 0;
+    int position;
 
     public char Read()
     {
-        if (position >= s.Length)
-            return char.MinValue;
-
-        return s[position++];
+        return position < s.Length ? s[position++] : char.MinValue;
     }
 
     public char Peek()
     {
-        if (position >= s.Length)
-            return char.MinValue;
-
-        return s[position];
+        return position < s.Length ? s[position] : char.MinValue;
     }
 }

@@ -3,8 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net9.0-windows</TargetFramework>
         <OutputType>WinExe</OutputType>
-        <!-- <UseWindowsForms>true</UseWindowsForms> -->
-        <Version>0.2.9</Version>
+        <Version>0.3.4</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,18 +11,6 @@
         <Content Remove="Build\**" />
         <EmbeddedResource Remove="Build\**" />
         <None Remove="Build\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="rubik.ttf" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="rubik.ttf">
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
     </ItemGroup>
 
     <ItemGroup>

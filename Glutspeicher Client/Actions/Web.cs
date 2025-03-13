@@ -3,7 +3,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Tausi.NativeWindow;
+using Vanara.PInvoke;
 
 namespace Glutspeicher.Client;
 
@@ -14,9 +15,6 @@ public class Web : Relay
 
     protected override async Task OnRun(RelaySession relaySession)
     {
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.EnableVisualStyles();
-
         string url;
 
         if (relaySession is null)
@@ -30,7 +28,7 @@ public class Web : Relay
         }
         else
         {
-            string port = this.port == 0 ? string.Empty : $":{this.port}";
+            var port = this.port == 0 ? string.Empty : $":{this.port}";
             url = $"{(string.IsNullOrEmpty(uri) ? "https" : uri).Split("://")[0]}://{hostname}{port}";
         }
 
@@ -72,18 +70,38 @@ public class Web : Relay
 
         if (relaySession is not null)
         {
-            var dialog = new Dialog { Text = name ?? string.Empty, viewportPosition = new(.5f, 1) };
-            dialog.AddButton($"Disconnect", (int) (Screen.PrimaryScreen.WorkingArea.Width / dialog.scale) / 8, Color.DarkRed).Click += (sender, e) =>
-            {
-                dialog.SetInvisible();
-                dialog.Close();
-            };
-
-            dialog.BeforeShow();
-            dialog.ShowDialog();
-            dialog.Dispose();
+            ShowDialog(name);
         }
 
         await Task.CompletedTask;
+    }
+
+    public static void ShowDialog(string text)
+    {
+        var screenWidth = Window.UseDC(x => Gdi32.GetDeviceCaps(x, Gdi32.DeviceCap.HORZRES));
+
+        using var dialog = new Window
+        {
+            ViewportPosition = new(.5f, 1)
+        };
+
+        var rowLayout = new RowLayout(dialog)
+        {
+            Title = text
+        };
+
+        var disconnectButton = new Button
+        {
+            Width = screenWidth / 8,
+            Text = "Disconnect",
+            BackgroundColor = Color.FromArgb(90, 40, 10)
+        };
+        disconnectButton.Click += (_, _) =>
+        {
+            dialog.Dispose();
+        };
+        dialog.Add(disconnectButton);
+
+        dialog.ShowDialog();
     }
 }

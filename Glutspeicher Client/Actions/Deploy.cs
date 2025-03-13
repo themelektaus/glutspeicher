@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Windows.Forms;
+using Tausi.NativeWindow;
 
 namespace Glutspeicher.Client;
 
@@ -65,31 +65,7 @@ public class Deploy
             throw new($"{nameof(solutionFile)} not found");
         }
 
-        var ok = false;
-
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.EnableVisualStyles();
-
-        var dialog = new Dialog { Text = $"{nameof(Deploy)} to {sshHostname}" };
-
-        dialog.AddButton($"Yes", 100, Color.DarkGreen).Click += (sender, e) =>
-        {
-            dialog.SetInvisible();
-            ok = true;
-            dialog.Close();
-        };
-
-        dialog.AddButton($"No", 100, Color.DarkRed).Click += (sender, e) =>
-        {
-            dialog.SetInvisible();
-            dialog.Close();
-        };
-
-        dialog.BeforeShow();
-        dialog.ShowDialog();
-        dialog.Dispose();
-
-        if (!ok)
+        if (!ShowDialog($"{nameof(Deploy)} to {sshHostname}"))
         {
             return;
         }
@@ -181,5 +157,46 @@ public class Deploy
                 Path.GetRelativePath(folder.FullName, file.FullName)
             );
         }
+    }
+
+    public static bool ShowDialog(string text)
+    {
+        var ok = false;
+
+        using var dialog = new Window();
+
+        var rowLayout = new RowLayout(dialog)
+        {
+            Title = text
+        };
+
+        var yesButton = new Button
+        {
+            Width = 100,
+            Text = "Yes",
+            BackgroundColor = Color.DarkGreen
+        };
+        yesButton.Click += (_, _) =>
+        {
+            ok = true;
+            dialog.Dispose();
+        };
+        dialog.Add(yesButton);
+
+        var noButton = new Button
+        {
+            Width = 100,
+            Text = "No",
+            BackgroundColor = Color.FromArgb(90, 40, 10)
+        };
+        noButton.Click += (_, _) =>
+        {
+            dialog.Dispose();
+        };
+        dialog.Add(noButton);
+
+        dialog.ShowDialog();
+
+        return ok;
     }
 }

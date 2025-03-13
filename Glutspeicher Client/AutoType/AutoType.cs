@@ -1,5 +1,4 @@
 using System.Threading;
-using System.Windows.Forms;
 
 namespace Glutspeicher.Client;
 
@@ -13,7 +12,6 @@ public partial class AutoType
 
     static bool Perform(string keyString)
     {
-        Application.DoEvents();
         AutoType_SendInputEx.SendKeysWait(keyString);
         return true;
     }
@@ -22,11 +20,15 @@ public partial class AutoType
     {
         var open = '\u25A1';
         while (s.Contains(open))
+        {
             open++;
+        }
 
         var close = (char) (open + 1);
         while (s.Contains(close))
+        {
             close++;
+        }
 
         s = s.Replace('{', open).Replace('}', close);
         s = s.Replace(new string(open, 1), @"{{}");

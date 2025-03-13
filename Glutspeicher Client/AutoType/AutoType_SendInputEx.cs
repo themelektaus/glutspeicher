@@ -1,39 +1,43 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using System.Windows.Forms;
-
+using System.Threading;
 using StringComparison = System.StringComparison;
 
 namespace Glutspeicher.Client;
 
 public static class AutoType_SendInputEx
 {
-    static readonly AutoType_CriticalSectionEx locker = new();
+    static readonly Lock locker = new();
 
     public static void SendKeysWait(string keyString)
     {
         var events = Parse(keyString);
         if (events.Count == 0)
+        {
             return;
+        }
 
-        if (!locker.Enter())
-            return;
-
-        Fix(events);
-
-        using (var engine = new AutoType_Engine())
+        locker.Enter();
+        
+        try
+        {
+            Fix(events);
+            using var engine = new AutoType_Engine();
             Send(engine, events);
-
-        locker.Exit();
+        }
+        finally
+        {
+            locker.Exit();
+        }
     }
 
     static List<AutoType_Event> Parse(string keyString)
     {
         var stream = new AutoType_CharStream(keyString);
         var events = new List<AutoType_Event>();
-        var eventKeyModifiers = new List<Keys> { Keys.None };
-        var keyModifiers = Keys.None;
+        var eventKeyModifiers = new List<int> { 0 };
+        var keyModifiers = 0;
 
         for (; ; )
         {
@@ -48,26 +52,26 @@ public static class AutoType_SendInputEx
 
                 if (c == '+')
                 {
-                    eventKeyModifiers[^1] |= Keys.Shift;
+                    eventKeyModifiers[^1] |= 65536;
                     continue;
                 }
 
                 if (c == '^')
                 {
-                    eventKeyModifiers[^1] |= Keys.Control;
+                    eventKeyModifiers[^1] |= 131072;
                     continue;
                 }
 
                 if (c == '%')
                 {
-                    eventKeyModifiers[^1] |= Keys.Alt;
+                    eventKeyModifiers[^1] |= 262144;
                     continue;
                 }
             }
 
             if (c == '(')
             {
-                eventKeyModifiers.Add(Keys.None);
+                eventKeyModifiers.Add(0);
                 continue;
             }
 
@@ -76,7 +80,7 @@ public static class AutoType_SendInputEx
                 if (eventKeyModifiers.Count >= 2)
                 {
                     eventKeyModifiers.RemoveAt(eventKeyModifiers.Count - 1);
-                    eventKeyModifiers[^1] = Keys.None;
+                    eventKeyModifiers[^1] = 0;
                 }
                 else
                 {
@@ -85,7 +89,7 @@ public static class AutoType_SendInputEx
                 continue;
             }
 
-            var targetKeyModifiers = Keys.None;
+            var targetKeyModifiers = 0;
             foreach (var keyModifier in eventKeyModifiers)
                 targetKeyModifiers |= keyModifier;
 
@@ -104,7 +108,7 @@ public static class AutoType_SendInputEx
                 events.Add(new()
                 {
                     type = AutoType_Event.Type.Key,
-                    vKey = (int) Keys.Enter
+                    vKey = 13
                 });
             }
             else
@@ -116,50 +120,50 @@ public static class AutoType_SendInputEx
                 });
             }
 
-            eventKeyModifiers[^1] = Keys.None;
+            eventKeyModifiers[^1] = 0;
         }
 
-        EnsureKeyModifiers(ref keyModifiers, Keys.None, events);
+        EnsureKeyModifiers(ref keyModifiers, 0, events);
 
         return events;
     }
 
     static void EnsureKeyModifiers(
-        ref Keys currentKeys,
-        Keys targetKeys,
+        ref int currentKeys,
+        int targetKeys,
         List<AutoType_Event> events
     )
     {
         if (currentKeys == targetKeys)
             return;
 
-        if ((currentKeys & Keys.Shift) != (targetKeys & Keys.Shift))
+        if ((currentKeys & 65536) != (targetKeys & 65536))
         {
             events.Add(new()
             {
                 type = AutoType_Event.Type.KeyModifier,
-                keyModifier = Keys.Shift,
-                down = ((targetKeys & Keys.Shift) != Keys.None)
+                keyModifier = 65536,
+                down = ((targetKeys & 65536) != 0)
             });
         }
 
-        if ((currentKeys & Keys.Control) != (targetKeys & Keys.Control))
+        if ((currentKeys & 131072) != (targetKeys & 131072))
         {
             events.Add(new()
             {
                 type = AutoType_Event.Type.KeyModifier,
-                keyModifier = Keys.Control,
-                down = ((targetKeys & Keys.Control) != Keys.None)
+                keyModifier = 131072,
+                down = ((targetKeys & 131072) != 0)
             });
         }
 
-        if ((currentKeys & Keys.Alt) != (targetKeys & Keys.Alt))
+        if ((currentKeys & 262144) != (targetKeys & 262144))
         {
             events.Add(new()
             {
                 type = AutoType_Event.Type.KeyModifier,
-                keyModifier = Keys.Alt,
-                down = ((targetKeys & Keys.Alt) != Keys.None)
+                keyModifier = 262144,
+                down = ((targetKeys & 262144) != 0)
             });
         }
 
@@ -291,7 +295,9 @@ public static class AutoType_SendInputEx
         foreach (var @event in events)
         {
             if (@event.type != AutoType_Event.Type.Char)
+            {
                 continue;
+            }
 
             int vKey = AutoType_KeyCodeCollection.CharToVKey(@event.@char, true);
             if (vKey > 0)
@@ -342,7 +348,7 @@ public static class AutoType_SendInputEx
             }
 
             if (
-                (@event.type == AutoType_Event.Type.Key && @event.vKey == (int) Keys.Tab) ||
+                (@event.type == AutoType_Event.Type.Key && @event.vKey == 9) ||
                 (@event.type == AutoType_Event.Type.Char && @event.@char == '\t')
             )
             {

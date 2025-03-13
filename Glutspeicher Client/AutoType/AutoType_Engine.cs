@@ -1,50 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
-using Environment = System.Environment;
 
 namespace Glutspeicher.Client;
 
 using SendMethod = AutoType_WindowInfo.SendMethod;
 
-public sealed class AutoType_Engine : System.IDisposable
+public sealed class AutoType_Engine : IDisposable
 {
-    nint originalKeyboardLayout = nint.Zero;
-    nint currentKeyboardLayout = nint.Zero;
+    nint originalKeyboardLayout;
+    nint currentKeyboardLayout;
 
     bool inputBlocked;
 
     SendMethod? forceSendMethod;
 
-    readonly Dictionary<nint, AutoType_WindowInfo> windowInfos = new();
-    AutoType_WindowInfo currentWindowInfo = new(nint.Zero);
+    readonly Dictionary<nint, AutoType_WindowInfo> windowInfos = [];
+    AutoType_WindowInfo currentWindowInfo = new(0);
 
-    Keys currentKeyModifiers = Keys.None;
+    int currentKeyModifiers = 0;
 
-    readonly System.Diagnostics.Stopwatch lastEventStopWatch = new();
+    readonly Stopwatch lastEventStopWatch = new();
 
     public AutoType_Engine()
     {
         InitializeEnvironment();
-
-        Application.DoEvents();
 
         inputBlocked = AutoType_NativeMethods.BlockInput(true);
 
         var lastInputTime = AutoType_NativeMethods.GetLastInputTime();
         if (lastInputTime.HasValue)
         {
-            var diff = Environment.TickCount - (int) lastInputTime.Value;
-            if (diff == 0)
+            if (Environment.TickCount - (int) lastInputTime.Value == 0)
+            {
                 SleepAndDoEvents(1);
+            }
         }
 
         PrepareSend();
 
-        if (ReleaseModifiers(true) == 0)
+        if (ReleaseModifiers(true) != 0)
+        {
             return;
+        }
 
         SleepAndDoEvents(1);
     }
@@ -60,10 +61,12 @@ public sealed class AutoType_Engine : System.IDisposable
         }
 
         if (currentKeyboardLayout != originalKeyboardLayout)
+        {
             if (originalKeyboardLayout != nint.Zero)
+            {
                 currentKeyboardLayout = originalKeyboardLayout;
-
-        Application.DoEvents();
+            }
+        }
 
         lastEventStopWatch.Stop();
     }
@@ -72,7 +75,6 @@ public sealed class AutoType_Engine : System.IDisposable
     {
         PreSendEvent();
         SendKeyInternal(iVKey, obExtKey, obDown);
-        Application.DoEvents();
     }
 
     void SendKeyInternal(int vKey, bool? isExtendedKey, bool? down)
@@ -89,38 +91,45 @@ public sealed class AutoType_Engine : System.IDisposable
         SendKeyNative(vKey, isExtendedKey, false);
     }
 
-    public void SetKeyModifier(Keys keyModifier, bool down)
+    public void SetKeyModifier(int keyModifier, bool down)
     {
         PreSendEvent();
         SetKeyModifierInternal(keyModifier, down, false);
-        Application.DoEvents();
     }
 
-    void SetKeyModifierInternal(Keys modifierKey, bool down, bool forChar)
+    void SetKeyModifierInternal(int modifierKey, bool down, bool forChar)
     {
         PrepareSend();
 
-        bool shift = ((modifierKey & Keys.Shift) != Keys.None);
-        bool control = ((modifierKey & Keys.Control) != Keys.None);
-        bool alt = ((modifierKey & Keys.Alt) != Keys.None);
+        var shift = (modifierKey & 65536) != 0;
+        var control = (modifierKey & 131072) != 0;
+        var alt = (modifierKey & 262144) != 0;
 
         if (shift)
-            SendKeyNative((int) Keys.LShiftKey, null, down);
+        {
+            SendKeyNative(160, null, down);
+        }
 
         if (control && alt && forChar)
         {
             if (!currentWindowInfo.charsRAltAsCtrlAlt)
-                SendKeyNative((int) Keys.LControlKey, null, down);
+            {
+                SendKeyNative(162, null, down);
+            }
 
-            SendKeyNative((int) Keys.RMenu, null, down);
+            SendKeyNative(165, null, down);
         }
         else
         {
             if (control)
-                SendKeyNative((int) Keys.LControlKey, null, down);
+            {
+                SendKeyNative(162, null, down);
+            }
 
             if (alt)
-                SendKeyNative((int) Keys.LMenu, null, down);
+            {
+                SendKeyNative(164, null, down);
+            }
         }
 
         if (down)
@@ -136,7 +145,6 @@ public sealed class AutoType_Engine : System.IDisposable
     {
         PreSendEvent();
         SendCharInternal(c, down);
-        Application.DoEvents();
     }
 
     void SendCharInternal(char c, bool? down)
@@ -144,7 +152,9 @@ public sealed class AutoType_Engine : System.IDisposable
         PrepareSend();
 
         if (TrySendCharByKeyPresses(c, down))
+        {
             return;
+        }
 
         if (down.HasValue)
         {
@@ -172,7 +182,9 @@ public sealed class AutoType_Engine : System.IDisposable
         var remainingDelay = milliseconds - elapsedDelay;
 
         if (remainingDelay >= 0)
+        {
             Thread.Sleep((int) remainingDelay);
+        }
 
         lastEventStopWatch.Reset();
         lastEventStopWatch.Start();
@@ -189,11 +201,12 @@ public sealed class AutoType_Engine : System.IDisposable
         currentKeyboardLayout = AutoType_NativeMethods.GetKeyboardLayout(0);
         originalKeyboardLayout = currentKeyboardLayout;
 
-        var processes = System.Diagnostics.Process.GetProcesses();
-        foreach (var process in processes)
+        foreach (var process in Process.GetProcesses())
         {
             if (process is null)
+            {
                 continue;
+            }
 
             var processName = AutoType_WindowInfo.GetProcessName(process);
 
@@ -213,17 +226,27 @@ public sealed class AutoType_Engine : System.IDisposable
                 forceSendMethod = SendMethod.UnicodePacket;
             }
 
-            try { process.Dispose(); } catch { }
+            try
+            {
+                process.Dispose();
+            }
+            catch
+            {
+            }
         }
     }
 
     bool SendKeyNative(int vKey, bool? isExtendedKey, bool down)
     {
         if (nint.Size == 4)
+        {
             return SendKeyNative32(vKey, isExtendedKey, null, down);
+        }
 
         if (nint.Size == 8)
+        {
             return SendKeyNative64(vKey, isExtendedKey, null, down);
+        }
 
         return false;
     }
@@ -231,10 +254,14 @@ public sealed class AutoType_Engine : System.IDisposable
     bool SendCharNative(char c, bool down)
     {
         if (nint.Size == 4)
+        {
             return SendKeyNative32(0, null, c, down);
+        }
 
         if (nint.Size == 8)
+        {
             return SendKeyNative64(0, null, c, down);
+        }
 
         return false;
     }
@@ -245,28 +272,32 @@ public sealed class AutoType_Engine : System.IDisposable
 
         input[0].Type = 1;
 
+        var ki = input[0].KeyboardInput;
+
         if (unicodeChar.HasValue)
         {
-            input[0].KeyboardInput.VirtualKeyCode = 0;
-            input[0].KeyboardInput.ScanCode = unicodeChar.Value;
-            input[0].KeyboardInput.Flags = (uint) ((down ? 0 : 2) | 4);
+            ki.VirtualKeyCode = 0;
+            ki.ScanCode = unicodeChar.Value;
+            ki.Flags = (uint) ((down ? 0 : 2) | 4);
         }
         else
         {
             var keyboardLayout = currentWindowInfo.keyboardLayout;
 
             if (unicodeChar.HasValue)
+            {
                 vKey = (int) (AutoType_NativeMethods.VkKeyScan3(unicodeChar.Value, keyboardLayout) & 0xFFU);
+            }
 
-            input[0].KeyboardInput.VirtualKeyCode = (ushort) vKey;
-            input[0].KeyboardInput.ScanCode = (ushort) (AutoType_NativeMethods.MapVirtualKey3((uint) vKey, 0, keyboardLayout) & 0xFFU);
-            input[0].KeyboardInput.Flags = GetKeyEventFlags(vKey, isExtendedKey, down);
+            ki.VirtualKeyCode = (ushort) vKey;
+            ki.ScanCode = (ushort) (AutoType_NativeMethods.MapVirtualKey3((uint) vKey, 0, keyboardLayout) & 0xFFU);
+            ki.Flags = GetKeyEventFlags(vKey, isExtendedKey, down);
         }
 
-        input[0].KeyboardInput.Time = 0;
-        input[0].KeyboardInput.ExtraInfo = AutoType_NativeMethods.GetMessageExtraInfo();
+        ki.Time = 0;
+        ki.ExtraInfo = AutoType_NativeMethods.GetMessageExtraInfo();
 
-        return AutoType_NativeMethods.SendInput32(1, input, Marshal.SizeOf(typeof(AutoType_NativeMethods.INPUT32))) == 1;
+        return AutoType_NativeMethods.SendInput32(1, input, Marshal.SizeOf<AutoType_NativeMethods.INPUT32>()) == 1;
     }
 
     bool SendKeyNative64(int vKey, bool? isExtendedKey, char? unicodeChar, bool down)
@@ -286,7 +317,9 @@ public sealed class AutoType_Engine : System.IDisposable
             var keyboardLayout = currentWindowInfo.keyboardLayout;
 
             if (unicodeChar.HasValue)
+            {
                 vKey = (int) (AutoType_NativeMethods.VkKeyScan3(unicodeChar.Value, keyboardLayout) & 0xFFU);
+            }
 
             input[0].VirtualKeyCode = (ushort) vKey;
             input[0].ScanCode = (ushort) (AutoType_NativeMethods.MapVirtualKey3((uint) vKey, 0, keyboardLayout) & 0xFFU);
@@ -296,7 +329,7 @@ public sealed class AutoType_Engine : System.IDisposable
         input[0].Time = 0;
         input[0].ExtraInfo = AutoType_NativeMethods.GetMessageExtraInfo();
 
-        return AutoType_NativeMethods.SendInput64Special(1, input, Marshal.SizeOf(typeof(AutoType_NativeMethods.SpecializedKeyboardINPUT64))) == 1;
+        return AutoType_NativeMethods.SendInput64Special(1, input, Marshal.SizeOf<AutoType_NativeMethods.SpecializedKeyboardINPUT64>()) == 1;
     }
 
     int ReleaseModifiers(bool withSpecial)
@@ -327,13 +360,13 @@ public sealed class AutoType_Engine : System.IDisposable
             {
                 ActivateOrToggleKey(vKey, false);
                 vKeysReleased.Add(vKey);
-
-                Application.DoEvents();
             }
         }
 
         if (withSpecial)
+        {
             ReleaseModifiersSpecialPost(vKeysReleased);
+        }
 
         return vKeysReleased.Count;
     }
@@ -353,10 +386,14 @@ public sealed class AutoType_Engine : System.IDisposable
     void ReleaseModifiersSpecialPost(List<int> vKeys)
     {
         if (vKeys.Count == 0)
+        {
             return;
+        }
 
         if (!vKeys.All(IsAltOrToggle))
+        {
             return;
+        }
 
         if (vKeys.Contains(AutoType_NativeMethods.VK_LMENU))
         {
@@ -388,34 +425,44 @@ public sealed class AutoType_Engine : System.IDisposable
     bool TrySendCharByKeyPresses(char c, bool? down)
     {
         if (c == char.MinValue)
+        {
             return false;
+        }
 
         var sendMethod = GetSendMethod(currentWindowInfo);
         if (sendMethod == SendMethod.UnicodePacket)
+        {
             return false;
+        }
 
         if (sendMethod != SendMethod.KeyEvent)
         {
             if (System.Array.IndexOf(forceUniChars, c) >= 0)
+            {
                 return false;
+            }
 
-            if ((c >= '\u02B0') && (c <= '\u02FF'))
+            if (c >= '\u02B0' && c <= '\u02FF')
+            {
                 return false;
+            }
         }
 
         var keyboardLayout = currentWindowInfo.keyboardLayout;
 
         var u = AutoType_NativeMethods.VkKeyScan3(c, keyboardLayout);
         if (u == 0xFFFFU)
+        {
             return false;
+        }
 
         var vKey = (int) (u & 0xFFU);
 
-        Keys mod = Keys.None;
+        var mod = 0;
 
-        var shift = ((mod & Keys.Shift) != Keys.None);
-        var control = ((mod & Keys.Control) != Keys.None);
-        var alt = ((mod & Keys.Alt) != Keys.None);
+        var shift = (mod & 65536) != 0;
+        var control = (mod & 131072) != 0;
+        var alt = (mod & 262144) != 0;
 
         var capsLock = false;
 
@@ -466,47 +513,60 @@ public sealed class AutoType_Engine : System.IDisposable
         }
 
         var keyModDiff = mod & ~currentKeyModifiers;
-        var shouldSleep = capsLock || (keyModDiff != Keys.None);
+        var shouldSleep = capsLock || (keyModDiff != 0);
         var sleepMilliseconds = currentWindowInfo.sleepAroundKeyMod;
 
         if (capsLock)
+        {
             SendKeyInternal(AutoType_NativeMethods.VK_CAPITAL, null, null);
+        }
 
-        if (keyModDiff != Keys.None)
+        if (keyModDiff != 0)
+        {
             SetKeyModifierInternal(keyModDiff, true, true);
+        }
 
         if (shouldSleep)
+        {
             SleepAndDoEvents(sleepMilliseconds);
+        }
 
         SendKeyInternal(vKey, null, down);
 
         if (shouldSleep)
+        {
             SleepAndDoEvents(sleepMilliseconds);
+        }
 
-        if (keyModDiff != Keys.None)
+        if (keyModDiff != 0)
+        {
             SetKeyModifierInternal(keyModDiff, false, true);
+        }
 
         if (capsLock)
+        {
             SendKeyInternal(AutoType_NativeMethods.VK_CAPITAL, null, null);
+        }
 
         if (shouldSleep)
+        {
             SleepAndDoEvents(sleepMilliseconds);
+        }
 
         return true;
     }
 
     SendMethod GetSendMethod(AutoType_WindowInfo info)
     {
-        if (forceSendMethod.HasValue)
-            return forceSendMethod.Value;
-
-        return info.sendMethod;
+        return forceSendMethod ?? info.sendMethod;
     }
 
     AutoType_WindowInfo GetWindowInfo(nint windowHandle)
     {
         if (windowInfos.TryGetValue(windowHandle, out var swi))
+        {
             return swi;
+        }
 
         swi = new AutoType_WindowInfo(windowHandle);
         windowInfos[windowHandle] = swi;
@@ -525,10 +585,14 @@ public sealed class AutoType_Engine : System.IDisposable
     {
         var targetKeyboardLayout = currentWindowInfo.keyboardLayout;
         if (targetKeyboardLayout == nint.Zero)
+        {
             return;
+        }
 
         if (currentKeyboardLayout == targetKeyboardLayout)
+        {
             return;
+        }
 
         currentKeyboardLayout = targetKeyboardLayout;
         SleepAndDoEvents(1);
@@ -539,12 +603,16 @@ public sealed class AutoType_Engine : System.IDisposable
         uint u = 0;
 
         if (!down)
+        {
             u |= 2;
+        }
 
         if (isExtendedKey.HasValue)
         {
             if (isExtendedKey.Value)
+            {
                 u |= 1;
+            }
         }
         else if (IsExtendedKeyEx(vKey))
         {
@@ -556,20 +624,30 @@ public sealed class AutoType_Engine : System.IDisposable
 
     static bool IsExtendedKeyEx(int vKey)
     {
-        if ((vKey >= 0x21) && (vKey <= 0x2E))
+        if (vKey >= 0x21 && vKey <= 0x2E)
+        {
             return true;
+        }
 
-        if ((vKey >= 0x5B) && (vKey <= 0x5D))
+        if (vKey >= 0x5B && vKey <= 0x5D)
+        {
             return true;
+        }
 
         if (vKey == 0x6F)
+        {
             return true;
+        }
 
         if (vKey == AutoType_NativeMethods.VK_RCONTROL)
+        {
             return true;
+        }
 
         if (vKey == AutoType_NativeMethods.VK_RMENU)
+        {
             return true;
+        }
 
         return false;
     }
@@ -579,24 +657,34 @@ public sealed class AutoType_Engine : System.IDisposable
     static bool IsKeyActive(int vKey)
     {
         if (System.Array.IndexOf(toggleKeys, vKey) >= 0)
-            return ((AutoType_NativeMethods.GetKeyState(vKey) & 1) != 0);
+        {
+            return (AutoType_NativeMethods.GetKeyState(vKey) & 1) != 0;
+        }
 
-        return ((AutoType_NativeMethods.GetAsyncKeyState(vKey) & 0x8000) != 0);
+        return (AutoType_NativeMethods.GetAsyncKeyState(vKey) & 0x8000) != 0;
     }
 
     static bool IsAltOrToggle(int vKey)
     {
-        if (vKey == AutoType_NativeMethods.VK_LMENU
-        ) return true;
+        if (vKey == AutoType_NativeMethods.VK_LMENU)
+        {
+            return true;
+        }
 
         if (vKey == AutoType_NativeMethods.VK_RMENU)
+        {
             return true;
+        }
 
         if (vKey == AutoType_NativeMethods.VK_MENU)
+        {
             return true;
+        }
 
         if (System.Array.IndexOf(toggleKeys, vKey) >= 0)
+        {
             return true;
+        }
 
         return false;
     }
@@ -604,8 +692,8 @@ public sealed class AutoType_Engine : System.IDisposable
     static void SleepAndDoEvents(int millseconds)
     {
         if (millseconds >= 0)
+        {
             Thread.Sleep(millseconds);
-
-        Application.DoEvents();
+        }
     }
 }
