@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tausi.NativeWindow;
+﻿namespace Tausi.NativeWindow;
 
 public abstract class Control : Frame
 {
@@ -19,6 +17,6 @@ public abstract class Control : Frame
 
     protected override void OnRectChanged()
     {
-        
+
     }
 }
