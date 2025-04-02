@@ -5,6 +5,6 @@
       - 8100:80
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ../stacks/glutspeicher-demo/Data:/app/Data
+      - ./data:/app/Data
     environment:
       - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000

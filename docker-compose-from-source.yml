@@ -5,7 +5,7 @@
       - 8100:80
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ../stacks/glutspeicher:/app
+      - ./app:/app
     environment:
       - TZ=Europe/Vienna
       - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000
