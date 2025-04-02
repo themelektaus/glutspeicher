@@ -379,6 +379,11 @@ class PasswordsPage extends Page
                 PasswordsPage.items = null
             }
             
+            if (PasswordsPage.refreshNextTime)
+            {
+                this.selectedItemId = 0
+            }
+            
             PasswordsPage.refreshNextTime = false
             
             if (PasswordsPage.items !== undefined)
