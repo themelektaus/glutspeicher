@@ -13,6 +13,9 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
+        Kernel32.AllocConsole();
+        User32.ShowWindow(Kernel32.GetConsoleWindow(), User32.ShowWindowCommand.SW_HIDE);
+
         User32.SetThreadDpiAwarenessContext(User32.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
 
         Environment.CurrentDirectory = Path.GetDirectoryName(Environment.ProcessPath);
