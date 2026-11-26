@@ -1,15 +1,16 @@
-// Fills a login form. Runs in every frame of the tab through chrome.scripting.executeScript,
+// Fills a login form and a one-time code. Runs in every frame of the tab through chrome.scripting.executeScript,
 // so it has to stay self-contained (no access to anything outside of the function).
 //
-// data: { username, password, pageOrigin, entryHost, publicSecondLevel, sharedSuffixes }
-// (the two lists are GlutMatch.PUBLIC_SECOND_LEVEL and GlutMatch.SHARED_SUFFIXES)
-// Returns { username: bool, password: bool, skipped: bool, foreignFrames: [host] } for the frame.
+// data: { username, password, totp, pageOrigin, entryHost, publicSecondLevel, sharedSuffixes }
+// (totp is the current code or empty; the two lists are GlutMatch.PUBLIC_SECOND_LEVEL and
+// GlutMatch.SHARED_SUFFIXES)
+// Returns { username: bool, password: bool, totp: bool, skipped: bool, foreignFrames: [host] } for the frame.
 // foreignFrames (top frame only): hosts of frames of other origins; activeTab does not reach
 // them, so the script does not run there at all.
 
 function glutspeicherFill(data)
 {
-    const result = { username: false, password: false, skipped: false, foreignFrames: [] }
+    const result = { username: false, password: false, totp: false, skipped: false, foreignFrames: [] }
 
     // Copies of GlutMatch.isIp and GlutMatch.baseDomain in lib/match.js: change both
     const isIp = host => /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith(`[`)
@@ -126,10 +127,13 @@ function glutspeicherFill(data)
         [ `text`, `email`, `tel` ].includes(x.type) &&
         !autocomplete(x).includes(`one-time-code`)
 
+    const isOneTimeCode = x => autocomplete(x).includes(`one-time-code`)
+    const looksLikeOneTimeCode = x => /otp|2fa|mfa|one.?time/i.test(`${x.name} ${x.id}`)
+
     const looksLikeUsername = x =>
         autocomplete(x).some(a => a === `username` || a === `email`) ||
         x.type === `email` ||
-        /user|login|e-?mail|account|ident|benutzer|anmelde/i.test(`${x.name} ${x.id}`)
+        (/user|login|e-?mail|account|ident|benutzer|anmelde/i.test(`${x.name} ${x.id}`) && !looksLikeOneTimeCode(x))
 
     let usernameField = null
 
@@ -154,6 +158,26 @@ function glutspeicherFill(data)
         usernameField = usable.find(x => isTextField(x) && looksLikeUsername(x)) ?? null
     }
 
+    // One-time code field: the one marked as one-time-code, else the only visible text or number
+    // field that is named like one and is neither the username nor the password field.
+    // Several candidates (also one field per digit) fill nothing: the copy button helps there.
+    let totpField = null
+
+    if (data.totp)
+    {
+        const isCodeField = x => [ `text`, `number`, `tel` ].includes(x.type)
+        const marked = usable.filter(x => isCodeField(x) && isOneTimeCode(x))
+        const named = usable.filter(x =>
+            isCodeField(x) &&
+            x !== usernameField &&
+            !looksLikeUsername(x) &&
+            /otp|2fa|mfa|one.?time|verification|code|token/i.test(`${x.name} ${x.id}`) &&
+            !/zip|post|promo|coupon|voucher|gift|country|area|captcha|invite|referr/i.test(`${x.name} ${x.id}`)
+        )
+        const candidates = marked.length ? marked : named
+        totpField = candidates.length === 1 ? candidates[0] : null
+    }
+
     // Set the value like typing does, so React, Vue and Angular see it
     const setValue = (element, value) =>
     {
@@ -174,6 +198,12 @@ function glutspeicherFill(data)
     {
         setValue(passwordField, data.password)
         result.password = true
+    }
+
+    if (totpField)
+    {
+        setValue(totpField, data.totp)
+        result.totp = true
     }
 
     return result

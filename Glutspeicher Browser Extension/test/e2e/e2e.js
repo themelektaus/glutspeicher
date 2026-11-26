@@ -37,7 +37,10 @@ const SEED = [
   { name: 'Wien Amt', uri: 'www.wien.gv.at', username: 'dave', password: 'wien-pass', source: 'Gemeinde' },
   { name: 'Other gv.at', uri: 'https://bund.gv.at', username: 'eve', password: 'bund-pass' },
   { name: 'Sibling Host', uri: 'http://b.glut.localhost', username: 'frank', password: 'sibling-pass' },
+  { name: 'Broken TOTP', uri: 'broken-totp.test', username: 'grace', password: 'grace-pass', totp: 'not base32!' },
   ...Array.from({ length: 120 }, (_, i) => ({ name: `Bulk ${i + 1}`, uri: `bulk${i + 1}.test`, username: `user${i + 1}`, password: `pw${i + 1}` })),
+  // Last, so "Test Login" stays the first suggestion on 127.0.0.1
+  { name: 'TOTP Login', uri: `http://127.0.0.1:${SITE_PORT}/otp`, username: 'heidi', password: 'heidi-pass', totp: 'JBSW Y3DP EHPK 3PXP' },
 ];
 
 // Writes the test entries, but only into an empty database (or one that holds just them)
@@ -107,6 +110,28 @@ async function popupState(popup) {
     more: document.querySelector('.more').hidden ? null : document.querySelector('.more').textContent,
     focus: document.activeElement?.className || document.activeElement?.tagName,
   }));
+}
+
+// The TOTP codes the popup shows: [{ name, code, title, invalid }]
+async function totpState(popup) {
+  return popup.evaluate(() => [...document.querySelectorAll('.list li')].filter(x => x.querySelector('.totp')).map(x => ({
+    name: x.querySelector('.name').textContent,
+    code: x.querySelector('.totp .code').hidden ? null : x.querySelector('.totp .value').textContent,
+    title: x.querySelector('.totp .code').title,
+    invalid: x.querySelector('.totp .invalid').hidden ? null : x.querySelector('.totp .invalid').textContent,
+  })));
+}
+
+// Waits until the shown code of the first entry with TOTP is valid for some more seconds and
+// returns it without the space (filling computes it again; near the end of the 30 s it could
+// already be the next one). The test never computes codes itself.
+async function freshCode(popup) {
+  for (;;) {
+    const [totp] = await totpState(popup);
+    const remaining = +(/valid for (\d+) s/.exec(totp?.title ?? '')?.[1] ?? 0);
+    if (totp?.code && remaining >= 5) return totp.code.replace(' ', '');
+    await sleep(1000);
+  }
 }
 
 async function waitClosed(popup) {
@@ -185,7 +210,7 @@ async function runWithPermission() {
     await page.goto(SITE + 'login.html');
     let popup = await openPopup(browser, ext, page);
     let s = await popupState(popup);
-    check('suggestions for 127.0.0.1 (rdp entry left out)', s.heading == 'Suggestions for 127.0.0.1' && JSON.stringify(s.names) == '["Test Login"]' && s.selected == 0, s);
+    check('suggestions for 127.0.0.1 (rdp entry left out)', s.heading == 'Suggestions for 127.0.0.1' && JSON.stringify(s.names) == '["Test Login","TOTP Login"]' && s.selected == 0, s);
     check('search field has the focus', s.focus == '' || s.focus == 'INPUT', s.focus);
     await popup.keyboard.press('Enter');
     check('popup closes after filling', await waitClosed(popup));
@@ -211,7 +236,7 @@ async function runWithPermission() {
     check('arrow keys move the selection', s.selected == 2, s.selected);
     await popup.keyboard.press('Escape');
     s = await popupState(popup);
-    check('Escape clears the search and shows the suggestions again', s.heading == 'Suggestions for 127.0.0.1' && s.names.length == 1, s);
+    check('Escape clears the search and shows the suggestions again', s.heading == 'Suggestions for 127.0.0.1' && s.names.length == 2, s);
 
     // Values from the server only as text
     await popup.type('.search input', 'evil');
@@ -347,6 +372,80 @@ async function runWithPermission() {
     v = await values(page);
     check('copy password shows a toast and does not fill', toast == 'Password copied' && !popup.isClosed() && v.q == '', { toast, v });
     await popup.close();
+
+    // TOTP: shown code, copy button, invalid secret
+    await page.goto(SITE + 'otp.html');
+    popup = await openPopup(browser, ext, page);
+    await popup.type('.search input', 'totp');
+    let totp = await totpState(popup);
+    const totpLogin = totp.find(x => x.name == 'TOTP Login');
+    const broken = totp.find(x => x.name == 'Broken TOTP');
+    check('popup shows the TOTP code as "123 456" with the remaining time', totp.length == 2 && /^\d{3} \d{3}$/.test(totpLogin?.code) && /^Copy code \(valid for \d+ s\)$/.test(totpLogin?.title), totp);
+    check('invalid TOTP secret: "Invalid TOTP" without a copy button', broken?.invalid == 'Invalid TOTP' && broken?.code == null, broken);
+    const ring = await popup.$eval('.list .totp .ring', e => getComputedStyle(e).backgroundImage).catch(e => e.message);
+    check('remaining time is drawn as a ring', ring.startsWith('conic-gradient'), ring);
+    await sleep(1100);
+    const ticked = (await totpState(popup)).find(x => x.name == 'TOTP Login');
+    check('the remaining time runs on while the popup is open', ticked.title != totpLogin.title || ticked.code != totpLogin.code, { before: totpLogin, after: ticked });
+    await popup.$eval('.search input', e => e.value = '');
+    await popup.type('.search input', 'totp login');
+    await popup.click('.list li .totp .code');
+    await sleep(200);
+    const codeToast = await popup.$eval('.toast', e => e.textContent).catch(e => 'no toast: ' + e.message);
+    v = await values(page);
+    check('copy code shows a toast and does not fill', codeToast == 'Code copied' && !popup.isClosed() && v.user == '' && v.code == '', { codeToast, v });
+
+    // TOTP: step 1 fills the login (the code field is still hidden), step 2 only the code
+    await popup.focus('.search input');
+    await popup.keyboard.press('Enter');
+    check('TOTP step 1: popup closes', await waitClosed(popup));
+    v = await values(page);
+    check('TOTP step 1: login filled, hidden code field left empty', v.user == 'heidi' && v.pass == 'heidi-pass' && v.code == '' && v.q == '', v);
+    await page.click('#f1 button');
+    popup = await openPopup(browser, ext, page);
+    s = await popupState(popup);
+    check('TOTP step 2: entry is suggested', s.names.includes('TOTP Login'), s);
+    await popup.type('.search input', 'totp login');
+    let code = await freshCode(popup);
+    await popup.keyboard.press('Enter');
+    check('TOTP step 2: popup closes after filling the code', await waitClosed(popup));
+    v = await values(page);
+    check('TOTP step 2: only the code is filled, with the code the popup showed', v.code == code && v.q == '', { v, code });
+    await page.click('#step2 button');
+    const otpOut = await page.$eval('#out', e => e.textContent);
+    check('TOTP step 2: form submits login and code', otpOut == JSON.stringify({ code, user: 'heidi', pass: 'heidi-pass' }), otpOut);
+
+    // TOTP: login and code field on the same page (login.html has a one-time-code field)
+    await page.goto(SITE + 'login.html');
+    popup = await openPopup(browser, ext, page);
+    await popup.type('.search input', 'totp login');
+    code = await freshCode(popup);
+    await popup.keyboard.press('Enter');
+    check('TOTP on the login page: popup closes', await waitClosed(popup));
+    v = await values(page);
+    check('TOTP on the login page: username, password and code filled', v.user == 'heidi' && v.pass == 'heidi-pass' && v.otp == code && v.q == '' && v.newsletter == '', { v, code });
+
+    // An entry without TOTP fills nothing on the code step
+    await page.goto(SITE + 'otp.html');
+    await page.click('#f1 button');
+    popup = await openPopup(browser, ext, page);
+    await popup.keyboard.press('Enter'); // Test Login
+    await sleep(500);
+    s = await popupState(popup);
+    v = await values(page);
+    check('entry without TOTP on the code step: nothing filled', v.code == '' && s.message == 'No login fields found on this page.', { s, v });
+    await popup.close();
+
+    // Options: keyboard shortcut (as the browser names it, in its language: "Umschalttaste+Alt+G")
+    await options.bringToFront();
+    await options.reload();
+    await options.waitForFunction(() => document.querySelector('.shortcut .keys').textContent != '…', { timeout: 5000 });
+    const keys = await options.$eval('.shortcut .keys', e => e.textContent);
+    check('options show the keyboard shortcut', /^(?=.*\bAlt\+)(\S+\+){2}G$/.test(keys), keys);
+    await options.click('.shortcut .change');
+    const shortcutsTab = await browser.waitForTarget(t => /^(chrome|brave):\/\/extensions\/shortcuts/.test(t.url()), { timeout: 5000 }).catch(() => null);
+    check('"Change shortcut" opens the shortcuts page', !!shortcutsTab, shortcutsTab?.url());
+    if (shortcutsTab) await (await shortcutsTab.asPage()).close();
 
     // Server error
     await options.evaluate(serverUrl => chrome.storage.local.set({ serverUrl }), SERVER + 'nope/');

@@ -2,7 +2,7 @@
 
 A browser extension for Brave (and other Chromium browsers such as Chrome and Edge) that suggests the logins of a Glutspeicher server for the open page and fills them into its login form. It replaces the browser's own password manager.
 
-- Version 0.1.0 (`extension/manifest.json`), Manifest V3, plain JavaScript without a build step
+- Version 0.2.0 (`extension/manifest.json`), Manifest V3, plain JavaScript without a build step
 - The extension itself is in `extension/`; `test/` holds the tests and is not part of it
 
 ## Installation
@@ -23,9 +23,11 @@ The settings open after a click on the gear in the popup, or via `brave://extens
 
 Only this address is stored (`chrome.storage.local`). When the server changes, the access to the old one is given up.
 
+- **Keyboard shortcut**: the shortcut that opens the popup, as the browser has it set (in the browser's language, e.g. *Alt+Shift+G* or *Umschalttaste+Alt+G*), or *Not set*. Extensions cannot change it themselves: **Change shortcut** opens `brave://extensions/shortcuts`.
+
 ## Use
 
-Click the extension icon or press **Alt+Shift+G** (change it at `brave://extensions/shortcuts`).
+Click the extension icon or press **Alt+Shift+G** (change it at `brave://extensions/shortcuts`, see Settings).
 
 - **Suggestions**: entries whose address fits the open page, best first:
   1. same host (`login.example.com`)
@@ -37,6 +39,16 @@ Click the extension icon or press **Alt+Shift+G** (change it at `brave://extensi
 - **Fill**: <kbd>↑</kbd>/<kbd>↓</kbd> select, <kbd>Enter</kbd> or a click fills the selected entry, <kbd>Esc</kbd> clears the search or closes the popup. The person and key buttons copy the username or the password.
 
 The password is the generated one if the entry has one, otherwise the static one (as in the web interface).
+
+### TOTP codes
+
+Entries with a TOTP secret show their current code in the row (`123 456`, like the web interface), with a ring for the time it is still valid; it runs on every second while the popup is open. A click on the code copies it (*Code copied*). The code is computed like in the web interface: Base32 secret (spaces, dashes, lower case and `=` are fine), HMAC-SHA1, 30 seconds, 6 digits (RFC 6238, `lib/totp.js` with WebCrypto). A secret that is no Base32, also an `otpauth://` URI, shows *Invalid TOTP*. A wrong clock on the computer gives wrong codes.
+
+Filling an entry with TOTP also fills the code, computed right before filling:
+
+- The code field is a visible text, number or phone field marked `autocomplete="one-time-code"`. Without such a mark it is the only field named like a code (*otp*, *totp*, *2fa*, *mfa*, *one time*, *verification*, *code*, *token* in name or id; not *zip*, *promo*, *coupon* and the like) that is neither the username nor the password field. If there are several candidates, also one field per digit, no code is filled: use the copy button there.
+- Login and code on one page: all three are filled. When the code is asked for on a page of its own after the login, open the popup again there: then only the code is filled.
+- The questions before filling apply to the code as well.
 
 ### How filling works
 
@@ -58,7 +70,7 @@ The popup asks before it fills ("Fill anyway" / "Cancel", Cancel has the focus):
 ## Security
 
 - **The server has no login and no TLS** (see the main README). Every time the popup opens, it loads **all entries including the passwords** with `GET /api/passwords`. Use the server only in a trusted network, or put it behind a reverse proxy with HTTPS and enter that `https://` address.
-- Passwords are held only in the memory of the popup while it is open; they are never written to the browser's storage. Copied passwords stay in the clipboard.
+- Passwords and TOTP secrets are held only in the memory of the popup while it is open; they are never written to the browser's storage, and neither are the codes. Copied passwords and codes stay in the clipboard.
 - Every value from the server is shown as text (`textContent`), never as HTML.
 - Requests are sent with `credentials: "include"`, so a login of the server (once it has one, #1) can work through its cookie.
 - Entries from CSV sources (Exports) are not part of `GET /api/passwords` and therefore not offered.
@@ -74,7 +86,7 @@ The popup asks before it fills ("Fill anyway" / "Cancel", Cancel has the focus):
 
 ## Tests
 
-Unit tests of the matching, the search and the URL handling (Node.js 18 or newer):
+Unit tests of the matching, the search, the URL handling, the TOTP codes (RFC 6238 test vectors) and the choice of the code field (Node.js 18 or newer):
 
 ```bash
 cd "Glutspeicher Browser Extension"
@@ -94,4 +106,4 @@ npm install
 GLUT_SERVER=http://127.0.0.1:5591 node e2e.js
 ```
 
-`BROWSER_PATH` sets another browser (default: Brave in `C:\Program Files`). The test serves its pages on port 5592 (single-step and two-step login, React-like value tracking, change-password form, same-site and cross-site frames, a page without login) and triggers the extension like a click on its icon. Headless browsers cannot answer the permission prompt, so the main part runs with a copy of the extension that holds the access to the test server already; the prompt itself is checked by hand.
+`BROWSER_PATH` sets another browser (default: Brave in `C:\Program Files`). The test serves its pages on port 5592 (single-step and two-step login, login with a code on a second step, React-like value tracking, change-password form, same-site and cross-site frames, a page without login) and triggers the extension like a click on its icon. Headless browsers cannot answer the permission prompt, so the main part runs with a copy of the extension that holds the access to the test server already; the prompt itself is checked by hand.

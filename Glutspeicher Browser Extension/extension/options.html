@@ -21,10 +21,16 @@
                 <p class="status" role="status"></p>
             </form>
 
+            <section class="shortcut">
+                <h2>Keyboard shortcut</h2>
+                <p>Opens the popup: <kbd class="keys">…</kbd></p>
+                <button type="button" class="change">Change shortcut</button>
+            </section>
+
             <section class="notice">
                 <h2>Security</h2>
                 <p>The Glutspeicher server has no login and no TLS of its own. All entries, including the passwords, are loaded from it every time the popup opens. Use the server only in a trusted network, or put it behind a reverse proxy with HTTPS and enter its <code>https://</code> address here.</p>
-                <p>The extension stores only this address. Passwords are kept in memory while the popup is open and are never written to the browser's storage.</p>
+                <p>The extension stores only this address. Passwords and TOTP secrets are kept in memory while the popup is open and are never written to the browser's storage.</p>
             </section>
         </main>
 

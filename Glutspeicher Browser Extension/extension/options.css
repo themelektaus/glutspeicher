@@ -52,6 +52,25 @@ label {
     overflow-wrap: anywhere;
 }
 
+.shortcut {
+    margin-top: 2em;
+
+    p {
+        margin: 0 0 .75em;
+    }
+
+    kbd {
+        font-family: inherit;
+        padding: .15em .45em;
+        border-radius: .2em;
+        background-color: var(--bg-color-4);
+
+        &.unset {
+            color: var(--fg-dim);
+        }
+    }
+}
+
 .notice {
     margin-top: 2em;
     padding: 1em;

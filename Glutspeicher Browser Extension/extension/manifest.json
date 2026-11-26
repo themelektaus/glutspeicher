@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Glutspeicher",
     "short_name": "Glutspeicher",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Suggests and fills logins from a Glutspeicher server.",
     "minimum_chrome_version": "121",
     "icons": {

@@ -111,6 +111,40 @@ header {
     li[aria-selected="true"] .details {
         color: #ddd;
     }
+
+    .totp {
+        flex: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .totp .code {
+        display: flex;
+        align-items: center;
+        gap: .4em;
+        padding: .3em .5em;
+        background-color: transparent;
+        font-variant-numeric: tabular-nums;
+
+        &:hover {
+            background-color: var(--bg-color-4);
+        }
+    }
+
+    /* Remaining time of the code, like the ring in the web frontend */
+    .totp .ring {
+        width: .9em;
+        height: .9em;
+        border-radius: 50%;
+        background: conic-gradient(var(--fg-text) calc(var(--part, 1) * 360deg), #fff3 0);
+        mask: radial-gradient(circle, transparent 40%, #000 42%);
+    }
+
+    .totp .invalid {
+        padding: 0 .5em;
+        color: var(--fg-error);
+        font-size: .85em;
+    }
 }
 
 .more {

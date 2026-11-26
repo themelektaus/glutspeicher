@@ -1,5 +1,6 @@
 // Popup: suggestions for the active tab, search over all entries, filling.
-// The entries (with passwords) live only in this page; it is gone when the popup closes.
+// The entries (with passwords and TOTP secrets) live only in this page; it is gone when the popup
+// closes. TOTP codes are computed here and are never stored either.
 // Every value from the server goes into the page with textContent only (never innerHTML).
 
 const $ = selector => document.querySelector(selector)
@@ -19,7 +20,8 @@ const state = {
     suggestions: [],
     shown: [],
     selected: -1,
-    onConfirm: null
+    onConfirm: null,
+    totpViews: []
 }
 
 function showMessage(text, actionText, action)
@@ -83,8 +85,10 @@ function render()
         }
     }
 
+    state.totpViews = []
     $list.replaceChildren(...state.shown.map((item, index) => createItem(item, index)))
     select(state.shown.length ? 0 : -1)
+    updateTotp()
 }
 
 function createItem(item, index)
@@ -118,6 +122,7 @@ function createItem(item, index)
     const password = GlutMatch.password(item)
     $item.append(
         $text,
+        ...(item.totp ? [ createTotp(item) ] : []),
         createCopyButton(`user`, `Copy username`, item.username, `Username copied`),
         createCopyButton(`key`, `Copy password`, password, `Password copied`)
     )
@@ -151,6 +156,69 @@ function createCopyButton(icon, title, value, doneText)
     })
     return $button
 }
+
+// The current code of an entry, as a copy button with the remaining time as a ring.
+// updateTotp() fills it in and runs every second while the popup is open.
+function createTotp(item)
+{
+    const $totp = document.createElement(`span`)
+    $totp.className = `totp`
+
+    const $button = document.createElement(`button`)
+    $button.className = `code`
+    $button.title = `Copy code`
+    $button.hidden = true
+
+    const $value = document.createElement(`span`)
+    $value.className = `value`
+
+    const $ring = document.createElement(`span`)
+    $ring.className = `ring`
+
+    $button.append($value, $ring)
+
+    const $invalid = document.createElement(`span`)
+    $invalid.className = `invalid`
+    $invalid.textContent = `Invalid TOTP`
+    $invalid.hidden = true
+
+    $button.addEventListener(`click`, async e =>
+    {
+        e.stopPropagation()
+        // Computed again: the shown code may just have run out
+        const { code } = await GlutTotp.generate(item.totp)
+        await navigator.clipboard.writeText(code)
+        toast(`Code copied`)
+    })
+
+    $totp.append($button, $invalid)
+    state.totpViews.push({ item, $button, $value, $ring, $invalid })
+    return $totp
+}
+
+async function updateTotp()
+{
+    const now = Date.now()
+    for (const view of state.totpViews)
+    {
+        try
+        {
+            const { code, remaining } = await GlutTotp.generate(view.item.totp, now)
+            view.$value.textContent = GlutTotp.format(code)
+            view.$ring.style.setProperty(`--part`, remaining / GlutTotp.PERIOD)
+            view.$button.title = `Copy code (valid for ${remaining} s)`
+            view.$button.hidden = false
+            view.$invalid.hidden = true
+        }
+        catch
+        {
+            view.$button.hidden = true
+            view.$invalid.hidden = false
+        }
+    }
+}
+
+setInterval(updateTotp, 1000)
 
 function select(index, scroll = true)
 {
@@ -238,6 +306,9 @@ function fill(item)
 
 async function fillNow(item, entryHost)
 {
+    // The code right before filling, so it is as fresh as possible; an invalid secret fills no code
+    const totp = item.totp ? await GlutTotp.generate(item.totp).then(x => x.code, () => ``) : ``
+
     let results
     try
     {
@@ -247,6 +318,7 @@ async function fillNow(item, entryHost)
             args: [ {
                 username: item.username ?? ``,
                 password: GlutMatch.password(item),
+                totp,
                 pageOrigin: new URL(state.tab.url).origin,
                 entryHost,
                 publicSecondLevel: GlutMatch.PUBLIC_SECOND_LEVEL,
@@ -260,7 +332,7 @@ async function fillNow(item, entryHost)
         return
     }
 
-    if (results.some(x => x.result?.username || x.result?.password))
+    if (results.some(x => x.result?.username || x.result?.password || x.result?.totp))
     {
         window.close()
         return

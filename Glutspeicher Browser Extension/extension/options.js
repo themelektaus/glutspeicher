@@ -1,4 +1,5 @@
 // Settings: the server URL. Saving asks for access to the server's origin and tests it with GET /api.
+// Below it the keyboard shortcut of the popup, as the browser has it set.
 
 const $form = document.querySelector(`form`)
 const $url = document.querySelector(`#server-url`)
@@ -81,4 +82,30 @@ async function init()
     }
 }
 
+// The shortcut is set by the browser (brave://extensions/shortcuts); extensions can only read it
+async function showShortcut()
+{
+    const commands = await chrome.commands.getAll()
+    const shortcut = commands.find(x => x.name == `_execute_action`)?.shortcut
+    const $keys = document.querySelector(`.shortcut .keys`)
+    $keys.textContent = shortcut || `Not set`
+    $keys.classList.toggle(`unset`, !shortcut)
+}
+
+document.querySelector(`.shortcut .change`).addEventListener(`click`, () =>
+{
+    // Brave redirects it to brave://extensions/shortcuts
+    chrome.tabs.create({ url: `chrome://extensions/shortcuts` })
+})
+
+// After a change on the shortcuts page and coming back to this tab
+document.addEventListener(`visibilitychange`, () =>
+{
+    if (!document.hidden)
+    {
+        showShortcut()
+    }
+})
+
+showShortcut()
 init()
