@@ -2,7 +2,7 @@
 
 A browser extension for Brave (and other Chromium browsers such as Chrome and Edge) that suggests the logins of a Glutspeicher server for the open page and fills them into its login form. It replaces the browser's own password manager.
 
-- Manifest V3, plain JavaScript without a build step
+- Version 0.1.0 (`extension/manifest.json`), Manifest V3, plain JavaScript without a build step
 - The extension itself is in `extension/`; `test/` holds the tests and is not part of it
 
 ## Installation
