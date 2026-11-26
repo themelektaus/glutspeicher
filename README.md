@@ -79,9 +79,12 @@ A modern **vanilla JavaScript SPA** featuring:
 
 ### Option 1: Docker (Recommended)
 
-The fastest way to get started is using Docker:
+The fastest way to get started is using Docker. The compose files need a key of your own in `GLUTSPEICHER_CRYPTO_KEY`; without it `docker-compose up` stops with an error:
 
 ```bash
+# Create .env with your own key (exactly 32 characters), see .env.example
+echo "GLUTSPEICHER_CRYPTO_KEY=$(openssl rand -hex 16)" > .env
+
 # Using pre-built image from Docker Hub
 docker-compose up
 ```
@@ -97,12 +100,14 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./data:/app/Data
     environment:
-      - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000
+      - "GLUTSPEICHER_CRYPTO_KEY=${GLUTSPEICHER_CRYPTO_KEY:?set GLUTSPEICHER_CRYPTO_KEY (32 characters) in .env, see .env.example}"
 ```
 
 Access the application at `http://localhost:8100`
 
-**Change `GLUTSPEICHER_CRYPTO_KEY` before the first start.** The value in the shipped `docker-compose.yml` is the public test key (32 zeros); a database written with it is effectively unencrypted. The key must be exactly 32 ASCII characters. If you change it later, the existing database can no longer be read.
+**Keep the key safe.** It must be exactly 32 ASCII characters. Without it the database and the backups in `./data` cannot be read, and if you change it later, the existing database can no longer be read. The public test key (32 zeros) is refused at start by Release builds (the Docker image is one).
+
+**Upgrading an installation that ran with the test key** (the compose files up to v0.5.9 set it): the new version does not start with it. Before you update, download the decrypted database in the old version (Settings, or `GET /api/database`), then set a key of your own, put the downloaded file as `./data/Database.litedb` and start the new version: it encrypts it with the new key on the first request (see "Restore" under "Data Protection"). The old backups in `./data` stay encrypted with the test key; delete them once the new database works.
 
 ### Option 2: Windows Standalone
 
@@ -157,8 +162,9 @@ dotnet build "Glutspeicher Client/Glutspeicher Client.csproj"
 - 32-character encryption key for database encryption
 - **Debug mode**: Automatically set to `00000000000000000000000000000000`
 - **Release mode (Windows)**: Auto-generated and stored as machine-level environment variable if not set
-- **Docker/Linux**: Must be explicitly configured
+- **Docker/Linux**: Must be explicitly configured (for Docker Compose in `.env`, see `.env.example`)
 - Must be exactly 32 bytes long (UTF-8), otherwise the server exits. Longer values are cut to 32 bytes.
+- Release builds exit if the key is the public test key (32 zeros)
 - If the key does not match an existing database, the database cannot be opened and the API answers with errors. There is no key rotation.
 
 ### appsettings.json

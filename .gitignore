@@ -9,3 +9,5 @@
 /Glutspeicher */**/*.user
 
 /Glutspeicher Client/Deploy.targets
+
+/.env

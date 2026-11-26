@@ -7,4 +7,4 @@
       - /etc/localtime:/etc/localtime:ro
       - ./data:/app/Data
     environment:
-      - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000
+      - "GLUTSPEICHER_CRYPTO_KEY=${GLUTSPEICHER_CRYPTO_KEY:?set GLUTSPEICHER_CRYPTO_KEY (32 characters) in .env, see .env.example}"

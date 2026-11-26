@@ -66,7 +66,7 @@ if (OperatingSystem.IsWindows())
     }
 }
 #elif DEBUG
-Environment.SetEnvironmentVariable("GLUTSPEICHER_CRYPTO_KEY", "00000000000000000000000000000000");
+Environment.SetEnvironmentVariable("GLUTSPEICHER_CRYPTO_KEY", TestCryptoKey);
 #endif
 
 LoadEnvironmentVariables();
@@ -76,6 +76,14 @@ if (CryptoKey.Length != 32)
     Console.WriteLine("Environment Variable \"GLUTSPEICHER_CRYPTO_KEY\" => Length != 32");
     return -1;
 }
+
+#if !DEBUG
+if (IsTestCryptoKey())
+{
+    Console.WriteLine("Environment Variable \"GLUTSPEICHER_CRYPTO_KEY\" => public test key (32 zeros) is not allowed, set a key of your own");
+    return -1;
+}
+#endif
 
 var services = builder.Services;
 services.AddWindowsService();

@@ -41,7 +41,7 @@ dotnet run --project "Glutspeicher Client/Glutspeicher Client.csproj"
 ### Docker
 
 ```bash
-# Build and run using Docker Compose
+# Build and run using Docker Compose (needs GLUTSPEICHER_CRYPTO_KEY in .env, see .env.example)
 docker-compose up
 
 # Run a locally published Linux build (expects it in ./app) in the .NET SDK image
@@ -55,8 +55,9 @@ docker-compose -f docker-compose-from-source.yml up
 - `GLUTSPEICHER_CRYPTO_KEY`: A 32-character encryption key used for database encryption
   - In DEBUG mode: Automatically set to "00000000000000000000000000000000"
   - In RELEASE mode (Windows): Automatically generated if not set, stored as machine-level environment variable
-  - For Docker: Set in docker-compose.yml (the shipped value is the public test key and must be replaced for real data)
+  - For Docker: the compose files take it from `.env` (gitignored, see `.env.example`) and refuse to start without it
   - Must be exactly 32 bytes; longer values are cut to 32 bytes, shorter ones stop the server
+  - Release builds refuse the public test key (32 zeros, `AppSettings.TestCryptoKey`) and exit with -1
 
 ### Configuration Files
 

@@ -5,6 +5,9 @@ namespace Glutspeicher.Server;
 
 public static class AppSettings
 {
+    // Public test key (32 zeros): used by Debug builds, refused by Release builds
+    public const string TestCryptoKey = "00000000000000000000000000000000";
+
     public static short HttpPort { get; private set; }
     public static string ServerVersion { get; private set; }
     public static string ClientVersion { get; private set; }
@@ -30,5 +33,10 @@ public static class AppSettings
         CryptoKey = [.. Encoding.UTF8.GetBytes(
             Environment.GetEnvironmentVariable("GLUTSPEICHER_CRYPTO_KEY") ?? string.Empty
         ).Take(32)];
+    }
+
+    public static bool IsTestCryptoKey()
+    {
+        return CryptoKey.SequenceEqual(Encoding.UTF8.GetBytes(TestCryptoKey));
     }
 }

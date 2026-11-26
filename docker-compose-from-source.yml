@@ -8,6 +8,6 @@
       - ./app:/app
     environment:
       - TZ=Europe/Vienna
-      - GLUTSPEICHER_CRYPTO_KEY=00000000000000000000000000000000
+      - "GLUTSPEICHER_CRYPTO_KEY=${GLUTSPEICHER_CRYPTO_KEY:?set GLUTSPEICHER_CRYPTO_KEY (32 characters) in .env, see .env.example}"
     working_dir: /app
     entrypoint: ["./Glutspeicher Server"]
