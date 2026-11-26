@@ -36,6 +36,17 @@ test(`baseDomain keeps registry second levels like gv.at and co.uk`, () =>
     assert.equal(GlutMatch.baseDomain(`10.0.0.1`), `10.0.0.1`)
 })
 
+test(`baseDomain keeps the owner's label under shared suffixes like myfritz.net`, () =>
+{
+    assert.equal(GlutMatch.baseDomain(`abc123.myfritz.net`), `abc123.myfritz.net`)
+    assert.equal(GlutMatch.baseDomain(`nas.abc123.myfritz.net`), `abc123.myfritz.net`)
+    assert.equal(GlutMatch.baseDomain(`myfritz.net`), `myfritz.net`)
+    assert.equal(GlutMatch.baseDomain(`me.github.io`), `me.github.io`)
+    assert.equal(GlutMatch.baseDomain(`shop.me.priv.at`), `me.priv.at`)
+    assert.equal(GlutMatch.baseDomain(`notmyfritz.net`), `notmyfritz.net`)
+    assert.equal(GlutMatch.baseDomain(`www.notmyfritz.net`), `notmyfritz.net`)
+})
+
 test(`rank: same host, then subdomain, then base domain`, () =>
 {
     const { RANK_HOST, RANK_SUBDOMAIN, RANK_BASE_DOMAIN, RANK_NONE } = GlutMatch
@@ -62,6 +73,53 @@ test(`rank does not match different owners under a registry or TLD`, () =>
     assert.equal(GlutMatch.rank(`evil.co.at`, `co.at`), RANK_NONE)
     assert.equal(GlutMatch.rank(`example.at`, `at`), RANK_NONE)
     assert.equal(GlutMatch.rank(`nas.lan`, `router.lan`), RANK_NONE)
+})
+
+test(`rank does not match different owners under shared suffixes`, () =>
+{
+    const { RANK_SUBDOMAIN, RANK_NONE } = GlutMatch
+
+    const pairs = [
+        [ `attacker.myfritz.net`, `abc123.myfritz.net` ],
+        [ `x.duckdns.org`, `home.duckdns.org` ],
+        [ `a.ddns.net`, `b.ddns.net` ],
+        [ `a.dyndns.org`, `b.dyndns.org` ],
+        [ `a.no-ip.org`, `b.no-ip.org` ],
+        [ `evil.github.io`, `me.github.io` ],
+        [ `evil.priv.at`, `me.priv.at` ],
+        [ `evil.ltd.uk`, `bank.ltd.uk` ],
+        [ `evil.me.uk`, `bank.me.uk` ],
+        [ `evil.plc.uk`, `bank.plc.uk` ],
+        [ `evil.blogspot.com`, `me.blogspot.com` ],
+        [ `evil.azurewebsites.net`, `app.azurewebsites.net` ],
+        [ `evil.netlify.app`, `me.netlify.app` ],
+        [ `abc123.myfritz.net`, `myfritz.net` ],
+        [ `myfritz.net`, `abc123.myfritz.net` ]
+    ]
+    for (const [ page, entry ] of pairs)
+    {
+        assert.equal(GlutMatch.rank(page, entry), RANK_NONE, `${page} / ${entry}`)
+    }
+
+    // The own subdomains still fit
+    assert.equal(GlutMatch.rank(`nas.abc123.myfritz.net`, `abc123.myfritz.net`), RANK_SUBDOMAIN)
+})
+
+test(`fitsPage: only the same host and sub/parent domains fill without asking`, () =>
+{
+    assert.equal(GlutMatch.fitsPage(`example.com`, `example.com`), true)
+    assert.equal(GlutMatch.fitsPage(`login.example.com`, `example.com`), true)
+    assert.equal(GlutMatch.fitsPage(`example.com`, `login.example.com`), true)
+    assert.equal(GlutMatch.fitsPage(`192.168.1.1`, `192.168.1.1`), true)
+
+    // Only the base domain in common: suggested, but asked first
+    assert.equal(GlutMatch.rank(`login.example.com`, `www.example.com`), GlutMatch.RANK_BASE_DOMAIN)
+    assert.equal(GlutMatch.fitsPage(`login.example.com`, `www.example.com`), false)
+    assert.equal(GlutMatch.fitsPage(`evil.unknownhost.example`, `me.unknownhost.example`), false)
+
+    assert.equal(GlutMatch.fitsPage(`example.com`, `example.org`), false)
+    assert.equal(GlutMatch.fitsPage(`evil.co.at`, `co.at`), false)
+    assert.equal(GlutMatch.fitsPage(`example.com`, null), false)
 })
 
 test(`suggestions are ordered by rank and keep the server order within a rank`, () =>

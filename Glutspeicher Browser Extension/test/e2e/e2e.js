@@ -36,6 +36,7 @@ const SEED = [
   { name: 'Evil <img src=x onerror=alert(1)>', uri: 'other.org', username: '<b>mallory</b>', password: 'evil"pass' },
   { name: 'Wien Amt', uri: 'www.wien.gv.at', username: 'dave', password: 'wien-pass', source: 'Gemeinde' },
   { name: 'Other gv.at', uri: 'https://bund.gv.at', username: 'eve', password: 'bund-pass' },
+  { name: 'Sibling Host', uri: 'http://b.glut.localhost', username: 'frank', password: 'sibling-pass' },
   ...Array.from({ length: 120 }, (_, i) => ({ name: `Bulk ${i + 1}`, uri: `bulk${i + 1}.test`, username: `user${i + 1}`, password: `pw${i + 1}` })),
 ];
 
@@ -310,6 +311,21 @@ async function runWithPermission() {
     check('suggestions for localhost', s.heading == 'Suggestions for localhost' && JSON.stringify(s.names) == '["Localhost Frame"]', s);
     await popup.keyboard.press('Escape');
     check('Escape with empty search closes the popup', await waitClosed(popup));
+
+    // Entry of a host that only shares the base domain: suggested, but asked first
+    await page.goto(`http://a.glut.localhost:${SITE_PORT}/login.html`);
+    popup = await openPopup(browser, ext, page);
+    s = await popupState(popup);
+    check('base-domain entry is suggested', s.heading == 'Suggestions for a.glut.localhost' && JSON.stringify(s.names) == '["Sibling Host"]' && s.selected == 0, s);
+    await popup.keyboard.press('Enter');
+    s = await popupState(popup);
+    check('base-domain entry asks first', s.confirm?.includes('is saved for b.glut.localhost, but this page is a.glut.localhost') && !s.confirm.includes('not encrypted') && s.focus == 'cancel', s);
+    await popup.keyboard.press('Enter'); // Cancel has the focus
+    v = await values(page);
+    check('base-domain entry: Enter on the question fills nothing', v.user == '' && v.pass == '' && !popup.isClosed(), v);
+    await popup.keyboard.press('Enter');
+    await popup.click('.confirm .fill');
+    check('base-domain entry: "Fill anyway" fills', await waitClosed(popup) && JSON.stringify(await values(page)).includes('"user":"frank","pass":"sibling-pass"'));
 
     // Not a web page
     await page.goto('about:blank');

@@ -30,9 +30,9 @@ Click the extension icon or press **Alt+Shift+G** (change it at `brave://extensi
 - **Suggestions**: entries whose address fits the open page, best first:
   1. same host (`login.example.com`)
   2. one is a subdomain of the other (entry `example.com` on `login.example.com`)
-  3. same base domain (entry `www.example.com` on `login.example.com`)
+  3. same base domain (entry `www.example.com` on `login.example.com`); the popup asks before it fills these
 
-  The base domain is the last two labels, or three under known registry second levels such as `gv.at`, `co.at`, `or.at` and `co.uk`, so `wien.gv.at` does not fit `bund.gv.at`. IP addresses only fit exactly. Entries with `rdp://` or `ssh://` are never suggested; entries without scheme count as `https://` (like the server does).
+  The base domain is the last two labels, or three under known registry second levels such as `gv.at`, `co.at`, `or.at` and `co.uk`, so `wien.gv.at` does not fit `bund.gv.at`. Under known shared domains, where every subdomain may have another owner (dynamic DNS and hosting such as `myfritz.net`, `duckdns.org`, `ddns.net`, `dyndns.org`, `no-ip.org`, `github.io`, `netlify.app`, `azurewebsites.net`, `blogspot.com`, and `priv.at`, `ltd.uk`, `me.uk`, `plc.uk`; the list is `SHARED_SUFFIXES` in `lib/match.js`), the owner's label belongs to it: `attacker.myfritz.net` does not fit `abc123.myfritz.net`, `nas.abc123.myfritz.net` does. IP addresses only fit exactly. Entries with `rdp://` or `ssh://` are never suggested; entries without scheme count as `https://` (like the server does).
 - **Search**: type into the search field. Like in the web interface, the text is split at spaces and every term must occur in name, username, address, source or section. At most 100 hits are shown.
 - **Fill**: <kbd>↑</kbd>/<kbd>↓</kbd> select, <kbd>Enter</kbd> or a click fills the selected entry, <kbd>Esc</kbd> clears the search or closes the popup. The person and key buttons copy the username or the password.
 
@@ -46,13 +46,13 @@ The popup runs a script in the open tab (`chrome.scripting.executeScript`, with 
 - The username field is the last visible text, e-mail or phone field before the password field, preferably in the same form; one marked `autocomplete="username"`/`email` wins. One-time-code fields are left out.
 - **Two-step logins**: without a password field only a field that clearly asks for the username is filled (`autocomplete="username"`/`email`, `type=email`, or a name/id like *user*, *login*, *email*). Open the popup again on the password step.
 - The values are set through the native `value` setter and followed by `input` and `change` events, so pages built with React, Vue or Angular take them over.
-- Frames of the same site are filled too. Frames of another site get the credentials only if they are the site of the entry. Note: `activeTab` reaches only the page's own site, so login forms in frames of other sites (embedded logins) cannot be filled; the popup says so, use the copy buttons there.
+- Frames of the same site are filled too. Frames of another site get the credentials only if they are the site of the entry (same host, or a sub/parent domain with the same base domain). Note: `activeTab` reaches only the page's own site, so login forms in frames of other sites (embedded logins) cannot be filled; the popup says so, use the copy buttons there.
 
 ### Questions before filling
 
 The popup asks before it fills ("Fill anyway" / "Cancel", Cancel has the focus):
 
-- if the entry's address does not fit the page (an entry picked by search for another site), and
+- if the entry is not saved for this host or a sub/parent domain of it: an entry picked by search for another site, and also a suggestion that only shares the base domain (entry `abc123.example.net` on `attacker.example.net` may belong to someone else), and
 - if the page is plain `http://` outside of `localhost` and private networks (10.x, 172.16–31.x, 192.168.x).
 
 ## Security

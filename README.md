@@ -72,7 +72,7 @@ Built with **.NET 9.0 Windows**, the client provides:
 A Manifest V3 extension in `Glutspeicher Browser Extension/` (plain JavaScript, no build) that replaces the browser's password manager:
 - **Settings**: the URL of the Glutspeicher server (the only thing it stores)
 - **Popup**: suggestions for the open page (same host, subdomain, base domain), search over all entries like the web interface, keyboard control
-- **Fill**: fills username and password into the login form of the open tab (also two-step logins and React/Vue forms); asks first if the entry belongs to another site or the page is plain HTTP
+- **Fill**: fills username and password into the login form of the open tab (also two-step logins and React/Vue forms); asks first if the entry is not saved for this host or a sub/parent domain of it (also for base-domain suggestions) or the page is plain HTTP
 - Loads all entries with `GET /api/passwords` every time the popup opens: use the server only in a trusted network or behind HTTPS (see the security notice above)
 
 Installation in Brave: `brave://extensions` → Developer mode → **Load unpacked** → folder `Glutspeicher Browser Extension/extension`. Details and tests: [Glutspeicher Browser Extension/README.md](Glutspeicher%20Browser%20Extension/README.md).

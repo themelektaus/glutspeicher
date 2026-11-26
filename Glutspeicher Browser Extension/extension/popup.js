@@ -214,7 +214,9 @@ function fill(item)
     const entryHost = GlutMatch.entryHost(item.uri)
     const warnings = []
 
-    if (GlutMatch.rank(state.pageHost, entryHost) == GlutMatch.RANK_NONE)
+    // Also for entries that only share the base domain: on "attacker.example.net" the entry
+    // of "abc123.example.net" is a suggestion, but may belong to someone else
+    if (!GlutMatch.fitsPage(state.pageHost, entryHost))
     {
         const savedFor = entryHost ?? ((item.uri ?? ``).trim() || `no website`)
         warnings.push(`“${item.name || item.username || `This entry`}” is saved for ${savedFor}, but this page is ${state.pageHost}.`)
@@ -246,7 +248,9 @@ async function fillNow(item, entryHost)
                 username: item.username ?? ``,
                 password: GlutMatch.password(item),
                 pageOrigin: new URL(state.tab.url).origin,
-                entryHost
+                entryHost,
+                publicSecondLevel: GlutMatch.PUBLIC_SECOND_LEVEL,
+                sharedSuffixes: GlutMatch.SHARED_SUFFIXES
             } ]
         })
     }

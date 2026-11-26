@@ -12,6 +12,15 @@ const GlutMatch = {
     // ("wien.gv.at" is the base domain, not "gv.at")
     PUBLIC_SECOND_LEVEL: [ `ac`, `co`, `com`, `edu`, `go`, `gob`, `gouv`, `gov`, `gv`, `ne`, `net`, `or`, `org` ],
 
+    // Domains under which different owners get their own subdomain (dynamic DNS, hosting,
+    // registries): "abc123.myfritz.net" is the base domain, not "myfritz.net"
+    SHARED_SUFFIXES: [
+        `myfritz.net`, `duckdns.org`, `ddns.net`, `dyndns.org`, `no-ip.org`, `no-ip.biz`, `noip.me`, `synology.me`, `myqnapcloud.com`,
+        `github.io`, `gitlab.io`, `blogspot.com`, `azurewebsites.net`, `cloudapp.net`, `herokuapp.com`, `netlify.app`, `vercel.app`,
+        `pages.dev`, `workers.dev`, `web.app`, `firebaseapp.com`, `onrender.com`, `ngrok.io`, `ngrok-free.app`,
+        `priv.at`, `ltd.uk`, `me.uk`, `plc.uk`
+    ],
+
     // Host of a web entry, or null for entries that are no web pages (rdp://, ssh://, ...).
     // An entry without scheme is read as https:// (like Api.Passwords.Get on the server).
     entryHost(uri)
@@ -68,8 +77,10 @@ const GlutMatch = {
         return /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith(`[`)
     },
 
-    // "login.example.com" -> "example.com", "www.wien.gv.at" -> "wien.gv.at";
-    // IP addresses and single labels stay as they are
+    // "login.example.com" -> "example.com", "www.wien.gv.at" -> "wien.gv.at",
+    // "nas.abc123.myfritz.net" -> "abc123.myfritz.net"; IP addresses, single labels and the
+    // shared suffixes themselves stay as they are.
+    // lib/fill.js has a copy of it (it must stay self-contained): change both.
     baseDomain(host)
     {
         if (this.isIp(host))
@@ -80,7 +91,12 @@ const GlutMatch = {
         const labels = host.split(`.`)
         let count = 2
 
-        if (labels.length >= 3 && labels.at(-1).length == 2 && this.PUBLIC_SECOND_LEVEL.includes(labels.at(-2)))
+        const shared = this.SHARED_SUFFIXES.find(x => host.endsWith(`.${x}`))
+        if (shared)
+        {
+            count = shared.split(`.`).length + 1
+        }
+        else if (labels.length >= 3 && labels.at(-1).length == 2 && this.PUBLIC_SECOND_LEVEL.includes(labels.at(-2)))
         {
             count = 3
         }
@@ -124,6 +140,14 @@ const GlutMatch = {
         }
 
         return this.RANK_NONE
+    },
+
+    // Whether an entry may be filled into the page without asking: same host, or one is a
+    // subdomain of the other with the same base domain. Hosts that only share the base domain
+    // ("a.example.com" and "b.example.com") are suggested, but the popup asks first.
+    fitsPage(pageHost, entryHost)
+    {
+        return this.rank(pageHost, entryHost) >= this.RANK_SUBDOMAIN
     },
 
     // Entries that fit the page, best first; within a rank in the order of the server

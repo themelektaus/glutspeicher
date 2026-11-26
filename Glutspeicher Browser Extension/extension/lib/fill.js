@@ -1,7 +1,8 @@
 // Fills a login form. Runs in every frame of the tab through chrome.scripting.executeScript,
 // so it has to stay self-contained (no access to anything outside of the function).
 //
-// data: { username, password, pageOrigin, entryHost }
+// data: { username, password, pageOrigin, entryHost, publicSecondLevel, sharedSuffixes }
+// (the two lists are GlutMatch.PUBLIC_SECOND_LEVEL and GlutMatch.SHARED_SUFFIXES)
 // Returns { username: bool, password: bool, skipped: bool, foreignFrames: [host] } for the frame.
 // foreignFrames (top frame only): hosts of frames of other origins; activeTab does not reach
 // them, so the script does not run there at all.
@@ -10,12 +11,45 @@ function glutspeicherFill(data)
 {
     const result = { username: false, password: false, skipped: false, foreignFrames: [] }
 
-    // A frame of another origin than the page only gets the credentials if it is the entry's site
+    // Copies of GlutMatch.isIp and GlutMatch.baseDomain in lib/match.js: change both
+    const isIp = host => /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith(`[`)
+    const baseDomain = host =>
+    {
+        if (isIp(host))
+        {
+            return host
+        }
+
+        const labels = host.split(`.`)
+        let count = 2
+
+        const shared = (data.sharedSuffixes || []).find(x => host.endsWith(`.${x}`))
+        if (shared)
+        {
+            count = shared.split(`.`).length + 1
+        }
+        else if (labels.length >= 3 && labels.at(-1).length === 2 && (data.publicSecondLevel || []).includes(labels.at(-2)))
+        {
+            count = 3
+        }
+
+        return labels.slice(-count).join(`.`)
+    }
+
+    // A frame of another origin than the page only gets the credentials if it is the entry's site:
+    // the same host, or one is a subdomain of the other with the same base domain
+    // (the rule of GlutMatch.fitsPage, without asking, since the popup only asked about the page)
     if (window !== window.top && location.origin !== data.pageOrigin)
     {
-        const host = location.hostname.toLowerCase()
+        const host = location.hostname.toLowerCase().replace(/\.$/, ``)
         const entryHost = (data.entryHost || ``).toLowerCase()
-        if (!entryHost || (host !== entryHost && !host.endsWith(`.${entryHost}`) && !entryHost.endsWith(`.${host}`)))
+        const fits =
+            entryHost !== `` &&
+            (host === entryHost ||
+                (!isIp(host) && !isIp(entryHost) &&
+                    (host.endsWith(`.${entryHost}`) || entryHost.endsWith(`.${host}`)) &&
+                    baseDomain(host) === baseDomain(entryHost)))
+        if (!fits)
         {
             result.skipped = true
             return result
