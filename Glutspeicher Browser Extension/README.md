@@ -46,7 +46,7 @@ Entries with a TOTP secret show their current code in the row (`123 456`, like t
 
 Filling an entry with TOTP also fills the code, computed right before filling:
 
-- The code field is a visible text, number or phone field marked `autocomplete="one-time-code"`. Without such a mark it is the only field named like a code (*otp*, *totp*, *2fa*, *mfa*, *one time*, *verification*, *code*, *token* in name or id; not *zip*, *promo*, *coupon* and the like) that is neither the username nor the password field. If there are several candidates, also one field per digit, no code is filled: use the copy button there.
+- The code field is a visible text, number or phone field marked `autocomplete="one-time-code"`. Without such a mark it is the only field named like a code (*otp*, *totp*, *2fa*, *mfa*, *one time*, *verification*, *code*, *token* in name or id; not *zip*, *promo*, *coupon*, *discount*, *gutschein*, *invitation* and the like) that is neither the username nor the password field and whose `autocomplete` names no other field (such as `cc-csc` or `postal-code`). A field named like a code is never taken as the username field. If there are several candidates, also one field per digit, no code is filled: use the copy button there.
 - Login and code on one page: all three are filled. When the code is asked for on a page of its own after the login, open the popup again there: then only the code is filled.
 - The questions before filling apply to the code as well.
 
