@@ -127,6 +127,7 @@ Located in `Glutspeicher Client/`:
 - Handles AutoType functionality (keyboard automation)
 - Manages relay sessions for remote connections (SSH to the relay host, iptables DNAT rules)
 - Does not call the server API: it is started by the `glut://` URL handler with Base64 JSON; `type` selects the action class in `Actions/` (AutoType, Mstsc, Ssh, Web, Deploy), the other keys set its public fields
+- Log (`ClientLog.cs`): written to `%TEMP%\glutspeicher-client-*.log` only when an action failed, with secret fields masked (`*password*`, `*secret*`, `*token*`, `text`), shown in Notepad and deleted afterwards; every start removes leftover logs, also the `tmp*.tmp` logs of clients up to 0.3.6 (those held credentials in plain text). A new action field that holds a secret must match these names
 - `Deploy` action: packs the builds into zip files and copies them to a target folder (used for the downloads in the web interface)
 
 ## Key Technical Details

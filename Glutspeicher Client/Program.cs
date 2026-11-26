@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -32,9 +32,12 @@ public static class Program
             return;
         }
 
+        ClientLog.CleanUp();
+
         var showLog = false;
 
         var log = new StringBuilder();
+        var secrets = new List<string>();
 
         try
         {
@@ -51,14 +54,7 @@ public static class Program
                 type.GetField(option.Key)?.SetValue(instance, option.Value);
             }
 
-            log.AppendLine(
-                JsonConvert.SerializeObject(new
-                {
-                    type = instance.GetType().Name,
-                    instance,
-                },
-                Formatting.Indented)
-            );
+            log.AppendLine(ClientLog.Describe(instance, secrets));
 
             var result = type
                 .GetMethods(BindingFlags.Public | BindingFlags.Instance)
@@ -76,28 +72,9 @@ public static class Program
             showLog = true;
         }
 
-        string tempFile;
-
-        try
-        {
-            tempFile = Path.GetTempFileName();
-            await File.WriteAllTextAsync(tempFile, log.ToString());
-        }
-        catch
-        {
-            throw;
-        }
-
         if (showLog)
         {
-            try
-            {
-                await Utils.RunAsync("notepad", tempFile, hidden: false);
-            }
-            catch
-            {
-                throw;
-            }
+            await ClientLog.ShowAsync(ClientLog.Scrub(log.ToString(), secrets));
         }
     }
 }
