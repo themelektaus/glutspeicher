@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Login</title><script src="show.js"></script></head><body>
+<input name="q" type="search" placeholder="Search site">
+<input name="newsletter" type="text" placeholder="Newsletter e-mail">
+<form id="f" onsubmit="event.preventDefault(); show(this)">
+  <input name="hiddenuser" type="text" style="display:none">
+  <input name="user" type="text" placeholder="User">
+  <input name="pass" type="password" placeholder="Password">
+  <input name="otp" type="text" autocomplete="one-time-code" placeholder="Code">
+  <button>Login</button>
+</form>
+<pre id="out"></pre>
+</body></html>

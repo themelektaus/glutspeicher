@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Glutspeicher</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="popup.css">
+    </head>
+    <body>
+        <header>
+            <img class="logo" src="icons/logo.svg" alt="">
+            <span class="title">Glutspeicher</span>
+            <button class="icon reload" title="Reload entries" style="background-image: url(icons/refresh.svg)"></button>
+            <button class="icon settings" title="Settings" style="background-image: url(icons/settings.svg)"></button>
+        </header>
+
+        <div class="search">
+            <input type="search" placeholder="Search all entries" autocomplete="off" spellcheck="false" autofocus>
+        </div>
+
+        <div class="message" hidden>
+            <p class="text"></p>
+            <button class="action primary" hidden></button>
+        </div>
+
+        <div class="heading"></div>
+        <ul class="list" role="listbox" aria-label="Entries"></ul>
+        <div class="more" hidden></div>
+
+        <div class="confirm" hidden>
+            <p class="text"></p>
+            <div class="buttons">
+                <button class="fill primary">Fill anyway</button>
+                <button class="cancel">Cancel</button>
+            </div>
+        </div>
+
+        <footer>
+            <span><kbd>↑</kbd><kbd>↓</kbd> select</span>
+            <span><kbd>Enter</kbd> fill</span>
+            <span><kbd>Esc</kbd> close</span>
+        </footer>
+
+        <script src="lib/server.js"></script>
+        <script src="lib/match.js"></script>
+        <script src="lib/fill.js"></script>
+        <script src="popup.js"></script>
+    </body>
+</html>

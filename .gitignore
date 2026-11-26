@@ -11,3 +11,6 @@
 /Glutspeicher Client/Deploy.targets
 
 /.env
+
+/Glutspeicher Browser Extension/test/e2e/node_modules/
+/Glutspeicher Browser Extension/test/e2e/package-lock.json

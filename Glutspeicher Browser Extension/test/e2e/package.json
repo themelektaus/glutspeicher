@@ -1,0 +1,11 @@
+{
+  "name": "glutspeicher-browser-extension-e2e",
+  "private": true,
+  "description": "End-to-end test of the Glutspeicher browser extension (see ../../README.md)",
+  "scripts": {
+    "test": "node e2e.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.19.0"
+  }
+}

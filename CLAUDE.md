@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Glutspeicher is a password management system with a server-client architecture. The server is an ASP.NET Core 9.0 web application that provides a REST API and web frontend, while the client is a Windows application that handles automation and relay functionality.
+Glutspeicher is a password management system with a server-client architecture. The server is an ASP.NET Core 9.0 web application that provides a REST API and web frontend, while the client is a Windows application that handles automation and relay functionality. A browser extension (Brave/Chromium) suggests and fills logins from the server.
 
 The server has no authentication and no TLS: everyone who can reach the port can read and change everything, including `GET /api/database` (decrypted database). Keep that in mind for every change to the API or the deployment.
 
@@ -36,6 +36,19 @@ dotnet build "Glutspeicher Client/Glutspeicher Client.csproj"
 
 # Run the client
 dotnet run --project "Glutspeicher Client/Glutspeicher Client.csproj"
+```
+
+### Browser Extension
+
+```bash
+# No build. Load "Glutspeicher Browser Extension/extension" unpacked in brave://extensions (Developer mode)
+
+# Unit tests (matching, search, URL handling)
+cd "Glutspeicher Browser Extension" && node --test "test/*.test.js"
+
+# End-to-end test in a headless Brave with a temporary profile. GLUT_SERVER must be a scratch
+# server with an empty database (the test writes entries and refuses other databases)
+cd "Glutspeicher Browser Extension/test/e2e" && npm install && GLUT_SERVER=http://127.0.0.1:5591 node e2e.js
 ```
 
 ### Docker
@@ -130,6 +143,16 @@ Located in `Glutspeicher Client/`:
 - Log (`ClientLog.cs`): written to `%TEMP%\glutspeicher-client-*.log` only when an action failed, with secret fields masked (`*password*`, `*secret*`, `*token*`, `text`), shown in Notepad and deleted afterwards; every start removes leftover logs, also the `tmp*.tmp` logs of clients up to 0.3.6 (those held credentials in plain text). A new action field that holds a secret must match these names
 - `Deploy` action: packs the builds into zip files and copies them to a target folder (used for the downloads in the web interface)
 
+### Browser Extension Architecture
+
+Located in `Glutspeicher Browser Extension/` (details in its README.md):
+- `extension/`: Manifest V3, plain JavaScript without build, English UI in the colors of the web frontend. `test/` is outside of it on purpose (Chrome refuses to load folders with `_*` files such as `node_modules`)
+- `lib/server.js`: server URL (the only value in `chrome.storage.local`), access via `optional_host_permissions` requested for the server's origin when it is saved, `fetch` with `credentials: "include"` (for a later login, #1). No CORS needed and no server change: the extension has host access to the server
+- `lib/match.js`: no browser APIs (tested in Node). Suggestions: same host > subdomain > base domain (with registry second levels like `gv.at`, `co.uk`); `rdp://`/`ssh://` left out, entries without scheme read as `https://`. Search like `search()` in `wwwroot/static/page/passwords/script.js`. Password is `generatedPassword || password`
+- `popup.js`: loads `GET /api/passwords` on every open and keeps it in memory only; shows every server value with `textContent` (never `innerHTML`, see #5); asks before filling an entry of another site or into a plain-HTTP page
+- `lib/fill.js`: `glutspeicherFill`, injected with `chrome.scripting.executeScript` (`activeTab`, `allFrames`); must stay self-contained. Native `value` setter plus `input`/`change` events. Frames of other origins get credentials only if they are the entry's site; `activeTab` does not reach them anyway
+- The version is in `extension/manifest.json` (`version`) and in the README
+
 ## Key Technical Details
 
 ### Encryption & Security
@@ -165,7 +188,7 @@ Located in `Glutspeicher Client/`:
 
 - The server port automatically shifts from 80 to 5580 on Windows (Debug and Release)
 - `Glutspeicher Server/Data/` in the working folder holds real data: never change or delete it. For tests run the built server from a scratch folder (copy `wwwroot` and `appsettings.json` there, start with `--HttpPort <port>`)
-- There are no automated tests
+- There are no automated tests for server and client; the browser extension has Node unit tests and an end-to-end test (see "Browser Extension" above)
 - Database backups are automatically created with timestamps in `Data/` directory
 - Frontend includes are resolved at request time, so changes are immediately visible
 - SCSS compilation happens on every request in both DEBUG and RELEASE modes

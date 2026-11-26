@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Two step</title><script src="show.js"></script></head><body>
+<input type="search" placeholder="Search">
+<form id="f1" novalidate onsubmit="event.preventDefault(); document.querySelector('#step2').hidden=false; this.hidden=true; window.step1=this.email.value">
+  <input name="email" id="identifier" type="email" autocomplete="username">
+  <button>Next</button>
+</form>
+<form id="step2" hidden onsubmit="event.preventDefault(); show(this, {email: window.step1})">
+  <input name="pass" type="password" autocomplete="current-password">
+  <button>Sign in</button>
+</form>
+<pre id="out"></pre>
+</body></html>

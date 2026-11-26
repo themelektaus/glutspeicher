@@ -1,0 +1,22 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>React-like</title></head><body>
+<!-- Mimics React's value tracking: the component state only changes on an input event
+     whose value differs from the last value set through the element's own setter -->
+<div id="app"><input id="u" type="text" autocomplete="username"><input id="p" type="password"><button id="b">Login</button></div>
+<pre id="out"></pre>
+<script>
+const state = { u: '', p: '' };
+const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+for (const id of ['u', 'p']) {
+  const el = document.getElementById(id);
+  let tracked = '';
+  Object.defineProperty(el, 'value', { configurable: true,
+    get() { return proto.get.call(this); },
+    set(v) { tracked = String(v); proto.set.call(this, v); } });
+  el.addEventListener('input', () => {
+    const cur = proto.get.call(el);
+    if (cur !== tracked) { tracked = cur; state[id] = cur; }
+  });
+}
+document.getElementById('b').onclick = () => document.getElementById('out').textContent = JSON.stringify(state);
+</script>
+</body></html>

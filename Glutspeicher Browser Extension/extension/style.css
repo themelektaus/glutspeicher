@@ -1,0 +1,112 @@
+/* Colors and fonts of the web frontend (wwwroot/static/css/root.scss) */
+
+@font-face {
+    font-family: Rubik;
+    src: url(fonts/rubik.ttf);
+}
+
+:root {
+    --fg-placeholder: #999;
+    --fg-text: #eee;
+    --fg-dim: #aaa;
+    --bg-color-1: #111;
+    --bg-color-2: #222;
+    --bg-color-3: #333;
+    --bg-color-4: #444;
+    --bg-color-5: #555;
+    --bg-active: #951;
+    --bg-active-more: #c96;
+    --bg-positive: #171;
+    --bg-negative: #731;
+    --fg-error: #f97;
+    --fg-ok: #8d8;
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg-color-2);
+}
+
+body, input, button {
+    font-family: Rubik, sans-serif;
+    font-size: 14px;
+    color: var(--fg-text);
+}
+
+input {
+    padding: .5em .75em;
+    outline: none;
+    border: none;
+    border-radius: .25em;
+    background-color: var(--bg-color-3);
+
+    &:focus {
+        background-color: var(--bg-color-4);
+    }
+
+    &::placeholder {
+        color: var(--fg-placeholder);
+    }
+}
+
+button {
+    outline: none;
+    border: none;
+    border-radius: .25em;
+    padding: .5em .9em;
+    background-color: var(--bg-color-4);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+
+    &:hover {
+        filter: brightness(1.15);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--bg-active-more);
+    }
+
+    &.positive {
+        background-color: var(--bg-positive);
+    }
+
+    &.primary {
+        background-color: var(--bg-active);
+    }
+
+    &.icon {
+        width: 2em;
+        height: 2em;
+        padding: 0;
+        flex: none;
+        border-radius: 50%;
+        background-color: transparent;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 1.15em;
+        opacity: .75;
+
+        &:hover {
+            opacity: 1;
+            background-color: var(--bg-color-4);
+        }
+    }
+}
+
+.error {
+    color: var(--fg-error);
+}
+
+.ok {
+    color: var(--fg-ok);
+}
+
+[hidden] {
+    display: none !important;
+}

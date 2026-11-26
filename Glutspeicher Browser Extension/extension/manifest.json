@@ -1,0 +1,43 @@
+{
+    "manifest_version": 3,
+    "name": "Glutspeicher",
+    "short_name": "Glutspeicher",
+    "version": "0.1.0",
+    "description": "Suggests and fills logins from a Glutspeicher server.",
+    "minimum_chrome_version": "121",
+    "icons": {
+        "16": "icons/icon-16.png",
+        "32": "icons/icon-32.png",
+        "48": "icons/icon-48.png",
+        "128": "icons/icon-128.png"
+    },
+    "action": {
+        "default_title": "Glutspeicher",
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon-16.png",
+            "32": "icons/icon-32.png"
+        }
+    },
+    "options_ui": {
+        "page": "options.html",
+        "open_in_tab": true
+    },
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting"
+    ],
+    "optional_host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Alt+Shift+G"
+            },
+            "description": "Open the Glutspeicher popup"
+        }
+    }
+}
