@@ -130,25 +130,30 @@ function glutspeicherFill(data)
     const isOneTimeCode = x => autocomplete(x).includes(`one-time-code`)
     const looksLikeOneTimeCode = x => /otp|2fa|mfa|one.?time/i.test(`${x.name} ${x.id}`)
 
+    const isMarkedUsername = x => autocomplete(x).some(a => a === `username` || a === `email`)
+
+    // A name like "loginCode" or "login-otp" asks for a code, not for the username
     const looksLikeUsername = x =>
-        autocomplete(x).some(a => a === `username` || a === `email`) ||
+        isMarkedUsername(x) ||
         x.type === `email` ||
-        (/user|login|e-?mail|account|ident|benutzer|anmelde/i.test(`${x.name} ${x.id}`) && !looksLikeOneTimeCode(x))
+        (/user|login|e-?mail|account|ident|benutzer|anmelde/i.test(`${x.name} ${x.id}`) &&
+            !looksLikeOneTimeCode(x) && !/code/i.test(`${x.name} ${x.id}`))
 
     let usernameField = null
 
     if (passwordField)
     {
         // The last text field before the password field, preferably in the same form;
-        // one marked as username wins
+        // one marked as username wins; one named like a one-time code (otp, 2fa) is left out
         const before = usable.filter(x =>
             isTextField(x) &&
+            (isMarkedUsername(x) || !looksLikeOneTimeCode(x)) &&
             (x.compareDocumentPosition(passwordField) & Node.DOCUMENT_POSITION_FOLLOWING)
         )
         const sameForm = passwordField.form ? before.filter(x => x.form === passwordField.form) : []
         const candidates = sameForm.length ? sameForm : before
         usernameField =
-            candidates.findLast(x => autocomplete(x).some(a => a === `username` || a === `email`)) ??
+            candidates.findLast(isMarkedUsername) ??
             candidates.at(-1) ??
             null
     }
@@ -159,7 +164,8 @@ function glutspeicherFill(data)
     }
 
     // One-time code field: the one marked as one-time-code, else the only visible text or number
-    // field that is named like one and is neither the username nor the password field.
+    // field that is named like one, is neither the username nor the password field and whose
+    // autocomplete names no other field (cc-csc, postal-code).
     // Several candidates (also one field per digit) fill nothing: the copy button helps there.
     let totpField = null
 
@@ -171,8 +177,9 @@ function glutspeicherFill(data)
             isCodeField(x) &&
             x !== usernameField &&
             !looksLikeUsername(x) &&
+            autocomplete(x).every(a => [ ``, `on`, `off` ].includes(a)) &&
             /otp|2fa|mfa|one.?time|verification|code|token/i.test(`${x.name} ${x.id}`) &&
-            !/zip|post|promo|coupon|voucher|gift|country|area|captcha|invite|referr/i.test(`${x.name} ${x.id}`)
+            !/zip|post|promo|coupon|voucher|gift|discount|rabatt|gutschein|country|area|captcha|invit|referr/i.test(`${x.name} ${x.id}`)
         )
         const candidates = marked.length ? marked : named
         totpField = candidates.length === 1 ? candidates[0] : null

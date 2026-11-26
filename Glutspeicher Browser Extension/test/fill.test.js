@@ -154,6 +154,27 @@ test(`a field named code next to the login is the code field`, () =>
     assert.deepEqual(values, { login: `alice`, password: `secret`, code: `123456` })
 })
 
+test(`a code field between username and password is not taken as the username`, () =>
+{
+    let { result, values } = fillPage([
+        { name: `user` },
+        { name: `otp` },
+        { name: `pass`, type: `password` }
+    ])
+    assert.deepEqual(values, { user: `alice`, otp: `123456`, pass: `secret` })
+    assert.deepEqual([ result.username, result.password, result.totp ], [ true, true, true ])
+
+    // A field marked as username stays the username field, whatever its name
+    ;({ values } = fillPage([ { name: `otp_user`, autocomplete: `username` }, { name: `pass`, type: `password` } ]))
+    assert.equal(values.otp_user, `alice`)
+})
+
+test(`a field named loginCode alone (step 2) gets the code, not the username`, () =>
+{
+    const { result, values } = fillPage([ { name: `loginCode` } ])
+    assert.deepEqual([ result.username, result.totp, values.loginCode ], [ false, true, `123456` ])
+})
+
 test(`no code is filled without a fitting field, with several candidates or without a code`, () =>
 {
     // Search field, newsletter and a hidden code field
@@ -185,6 +206,22 @@ test(`no code is filled without a fitting field, with several candidates or with
     // The username field is never the code field
     ;({ result, values } = fillPage([ { name: `user_token`, autocomplete: `username` } ]))
     assert.deepEqual([ result.username, result.totp, values.user_token ], [ true, false, `alice` ])
+
+    // Invitation, discount and voucher codes in English and German
+    for (const name of [ `invitation_code`, `discount_code`, `gutscheincode`, `rabattcode` ])
+    {
+        ;({ result, values } = fillPage([ { name } ]))
+        assert.deepEqual([ result.totp, values[name] ], [ false, `` ], name)
+    }
+
+    // A named field whose autocomplete names another field (card security code, postal code)
+    for (const field of [ { name: `securityCode`, autocomplete: `cc-csc` }, { name: `shipping_code`, autocomplete: `shipping postal-code` } ])
+    {
+        ;({ result, values } = fillPage([ field ]))
+        assert.deepEqual([ result.totp, values[field.name] ], [ false, `` ], field.name)
+    }
+    ;({ result } = fillPage([ { name: `otp_code`, autocomplete: `off` } ]))
+    assert.equal(result.totp, true)
 
     // Entry without TOTP
     ;({ result, values } = fillPage([ { name: `otp`, autocomplete: `one-time-code` } ], ``))
