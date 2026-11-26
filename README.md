@@ -174,8 +174,8 @@ Located in `Glutspeicher Server/appsettings.json`:
 ```json
 {
     "HttpPort": 80,
-    "ServerVersion": "0.5.9",
-    "ClientVersion": "0.3.6"
+    "ServerVersion": "0.5.10",
+    "ClientVersion": "0.3.7"
 }
 ```
 
@@ -362,8 +362,8 @@ Glutspeicher/
 
 ## Version Information
 
-- **Current Server Version**: 0.5.9
-- **Current Client Version**: 0.3.6
+- **Current Server Version**: 0.5.10
+- **Current Client Version**: 0.3.7
 - **Target Framework**: .NET 9.0
 - **Minimum Requirements**: ASP.NET Core 9.0 Runtime (server, unless published self-contained), .NET 9.0 Desktop Runtime (Windows client)
 
